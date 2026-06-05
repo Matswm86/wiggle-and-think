@@ -253,6 +253,23 @@ window.EXERCISES = [
 /* a recommended 12–15 min session: warm-up walk → thinking games → jumps → balance → calm */
 window.SESSION = ["bear","march","fistpalm","freeze","jacks","kanga","palmbeak","tree","breathe"];
 
+/* 3D Sonic (sonic3d.js) renders these exercises → archetype animation.
+   HYBRID: floor/animal moves (bear, crab, inch, catcow, dog) are intentionally
+   absent, so PipStage keeps the SVG mascot for them (Sonic can't do all-fours). */
+window.SONIC_MAP = {
+  march:"march", simon:"march", tightrope:"march",
+  jacks:"jacks", kanga:"jump", starjump:"jump",
+  freeze:"bounce", clap:"bounce", drum:"bounce",
+  tree:"balance", airplane:"balance", flamingo:"balance",
+  breathe:"reach", windmill:"reach", lazy8:"reach",
+  fistflat:"bounce", magicnumbers:"reach", noseear:"reach"
+};
+window.SONIC_DUR = {
+  march:1.6, simon:2.0, tightrope:2.4, jacks:1.4, kanga:1.4, starjump:1.5,
+  freeze:0.9, clap:1.0, drum:1.1, tree:4.0, airplane:4.0, flamingo:1.5,
+  breathe:6.0, windmill:2.4, lazy8:3.0, fistflat:2.0, magicnumbers:3.0, noseear:3.0
+};
+
 /* music band reference */
 window.BANDS = {
   A:{name:"Calm",   range:"55–75 BPM",  feel:"Slow & soft — breathing, balance, cool-down"},

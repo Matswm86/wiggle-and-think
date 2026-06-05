@@ -1,6 +1,8 @@
 /* ui.jsx — shared components & icons (exported to window) */
 
+function usesSonic(ex) { return ex.rig !== "hands" && window.SONIC_MAP && window.SONIC_MAP[ex.id]; }
 function pipHTML(ex, extra) {
+  if (usesSonic(ex)) return `<canvas class="pip-s pip3d-canvas" width="320" height="320"></canvas>`;
   let s = ex.rig === "quad" ? buildPipQ(ex.theme)
         : ex.rig === "crab" ? buildPipCrab(ex.theme)
         : ex.rig === "hands" ? buildPipHands(ex.theme)
@@ -15,6 +17,26 @@ function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure }) {
   React.useEffect(() => {
     const el = ref.current; if (!el) return;
     const spd = speed || 1;
+    // 3D Sonic character (sonic3d.js) for the standing exercises. Same shared-GL
+    // pattern: live on the main player stage, static snapshot elsewhere.
+    if (usesSonic(ex)) {
+      let ctrl = null, canceled = false;
+      const start = () => {
+        if (canceled || !window.Sonic3D) return;
+        const canvas = el.querySelector("canvas"); if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(64, Math.round((rect.width || 320) * dpr));
+        canvas.height = Math.max(64, Math.round((rect.height || 320) * dpr));
+        const isMain = (className || "").includes("pstage");
+        const pAt = pausedAt != null ? pausedAt : (isMain && !frozen ? null : 0.3);
+        ctrl = window.Sonic3D.mount(canvas, ex.id, { speed: spd, pausedAt: pAt, frozen });
+        if (onMeasure) onMeasure((window.Sonic3D.DURATION[ex.id] || 2.0) / spd);
+      };
+      if (window.Sonic3D) start();
+      else window.addEventListener("sonic3d-ready", start, { once: true });
+      return () => { canceled = true; window.removeEventListener("sonic3d-ready", start); if (ctrl) ctrl.stop(); };
+    }
     // realistic 3D hands rig → WebGL (hands3d.js). Live only on the main player
     // stage; cards & step thumbnails render a single static pose (one shared GL ctx).
     if (ex.rig === "hands") {

@@ -13,8 +13,8 @@ mkdirSync(join(OUT, A, "vendor"), { recursive: true });
 
 // JSX files transpiled to .js (order preserved by index.html script tags)
 const JSX = ["tweaks-panel", "ui", "player", "grownups", "app"];
-// plain assets copied verbatim (hands3d.js is an ES module, copied as-is)
-const JS = ["pip", "data", "audio", "hands3d"];
+// plain assets copied verbatim (hands3d.js + sonic3d.js are ES modules, copied as-is)
+const JS = ["pip", "data", "audio", "hands3d", "sonic3d"];
 const CSS = ["char", "anim", "app"];
 
 for (const name of JSX) {

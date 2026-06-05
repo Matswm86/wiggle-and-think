@@ -50,12 +50,12 @@ const ANIM = {
     rot("RightArm", -Math.max(0, s) * 0.7, 0, 0.18); rot("LeftArm", -Math.max(0, -s) * 0.7, 0, -0.18);
     rot("Spine", 0.05, sin(t) * 0.05, 0);
   },
-  // jumping jacks — arms & legs out on the open beat, hop
+  // jumping jacks — arms sweep up overhead, legs open, hop on the open beat
   jacks(t) {
     const o = (1 - Math.cos(t * Math.PI * 2)) / 2;           // 0→1→0 open amount
-    hips.position.y = restHipsY + Math.sin(t * Math.PI * 2 > 0 ? t * Math.PI * 4 : 0) * 0 + o * 0.18;
-    rot("LeftArm", 0, 0, 0.3 + o * 1.7); rot("RightArm", 0, 0, -(0.3 + o * 1.7));
-    rot("LeftUpLeg", 0, 0, -o * 0.5); rot("RightUpLeg", 0, 0, o * 0.5);
+    hips.position.y = restHipsY + o * 0.13;
+    rot("LeftArm", -o * 0.45, 0, 0.35 + o * 2.35); rot("RightArm", -o * 0.45, 0, -(0.35 + o * 2.35)); // up overhead
+    rot("LeftUpLeg", 0, 0, o * 0.42); rot("RightUpLeg", 0, 0, -o * 0.42);  // legs open apart
   },
   // big two-foot jump — squat, leap, soft land
   jump(t) {
@@ -85,7 +85,7 @@ const ANIM = {
   // arms sweep up overhead and back down (breathe / windmill / lazy8 / reaches)
   reach(t) {
     const u = (1 - Math.cos(t * Math.PI * 2)) / 2;
-    rot("LeftArm", 0, 0, 0.2 + u * 1.9); rot("RightArm", 0, 0, -(0.2 + u * 1.9));
+    rot("LeftArm", -u * 0.5, 0, 0.2 + u * 2.5); rot("RightArm", -u * 0.5, 0, -(0.2 + u * 2.5));
     hips.position.y = restHipsY + u * 0.03;
   },
   // bend forward, hands toward floor (animal walks / cat-cow / dog approximation)
@@ -98,22 +98,12 @@ const ANIM = {
   },
 };
 
-// exercise → archetype  (only these render as Sonic; others fall back to mascot)
-const MAP = {
-  march: "march", simon: "march", tightrope: "march",
-  jacks: "jacks", kanga: "jump", starjump: "jump",
-  freeze: "bounce", clap: "bounce", drum: "bounce",
-  tree: "balance", airplane: "balance", flamingo: "balance",
-  breathe: "reach", windmill: "reach", lazy8: "reach",
-  bear: "bend", crab: "bend", inch: "bend", catcow: "bend", dog: "bend",
-  fistflat: "bounce", magicnumbers: "reach", noseear: "reach",
-};
-const DURATION = {
-  march: 1.6, simon: 2.0, tightrope: 2.4, jacks: 1.4, kanga: 1.4, starjump: 1.5,
-  freeze: 0.9, clap: 1.0, drum: 1.1, tree: 4.0, airplane: 4.0, flamingo: 1.5,
-  breathe: 6.0, windmill: 2.4, lazy8: 3.0, bear: 2.2, crab: 2.2, inch: 2.6,
-  catcow: 3.0, dog: 3.6, fistflat: 2.0, magicnumbers: 3.0, noseear: 3.0,
-};
+// exercise → archetype + durations live in data.js (window.SONIC_MAP / _DUR)
+// so the classic-loaded PipStage can decide Sonic-vs-mascot synchronously.
+// HYBRID: the floor/animal moves (bear, crab, inch, cat-cow, dog) are absent
+// from the map, so PipStage keeps the SVG mascot for them.
+const MAP = window.SONIC_MAP || {};
+const DURATION = window.SONIC_DUR || {};
 function has(exId) { return !!MAP[exId]; }
 
 function setPose(exId, t) { reset(); const a = ANIM[MAP[exId]]; if (a) a(t); }
@@ -135,7 +125,9 @@ function initGL() {
 function frameCamera() {
   const box = new THREE.Box3().setFromObject(root); const s = new THREE.Vector3(); box.getSize(s);
   const ctr = new THREE.Vector3(); box.getCenter(ctr);
-  camera.position.set(ctr.x, ctr.y + 0.05, ctr.z + Math.max(s.y, s.x) * 1.35); camera.lookAt(ctr.x, ctr.y, ctr.z);
+  const fitH = s.y + 0.9;                                  // headroom for raised arms / hops
+  const dist = (fitH * 0.5) / Math.tan((30 * Math.PI / 180) / 2) * 1.04;
+  camera.position.set(ctr.x, ctr.y + 0.05, ctr.z + dist); camera.lookAt(ctr.x, ctr.y, ctr.z);
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.16 }));
   sh.rotation.x = -Math.PI / 2; sh.position.y = box.min.y + 0.001; sh.receiveShadow = true; scene.add(sh);
 }
