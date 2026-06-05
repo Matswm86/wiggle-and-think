@@ -1,3 +1,6 @@
+> **Full playbook: [`3D_CHARACTERS.md`](3D_CHARACTERS.md)** — architecture, both rig patterns,
+> the Blender retarget pipeline, and every gotcha. Read it before adding/fixing a 3D character.
+
 # Sonic animation pipeline (Blender, headless)
 
 The site's Sonic (`src/assets/anim/sonic_anim.glb`) = a clean Mixamo re-rig of
