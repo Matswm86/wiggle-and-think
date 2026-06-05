@@ -179,7 +179,10 @@ function initGL() {
 function loadModel() {
   new GLTFLoader().load(MODEL_URL, (gltf) => {
     const right = gltf.scene;
-    right.traverse((o) => { if (o.isMesh) { o.castShadow = true; if (o.material) o.material.side = THREE.DoubleSide; } });
+    // replace the dark, veiny photo texture (reads as "undead") with a clean,
+    // warm LIGHT skin material — smoother and friendlier for kids.
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xf2c9a6, roughness: 0.66, metalness: 0.0, side: THREE.DoubleSide });
+    right.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = skinMat; } });
     const B = collectBones(right);
     const q = orientQuaternion(B, right);
     const left = buildHand(skeletonClone(right), "l", q);
