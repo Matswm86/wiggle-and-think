@@ -276,6 +276,10 @@ window.SONIC_MAP = {
   drum:"Hip Hop Dancing"
 };
 
+/* 3D Pip creature (floor3d.js) renders the all-fours floor moves — Sonic's
+   proportions read as a blob on all fours, so these use the kid-creature rig. */
+window.FLOOR_MAP = { bear:1, crab:1, inch:1, catcow:1, dog:1 };
+
 /* music band reference */
 window.BANDS = {
   A:{name:"Calm",   range:"55–75 BPM",  feel:"Slow & soft — breathing, balance, cool-down"},

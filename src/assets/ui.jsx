@@ -1,8 +1,9 @@
 /* ui.jsx — shared components & icons (exported to window) */
 
 function usesSonic(ex) { return ex.rig !== "hands" && window.SONIC_MAP && window.SONIC_MAP[ex.id]; }
+function usesFloor(ex) { return window.FLOOR_MAP && window.FLOOR_MAP[ex.id]; }
 function pipHTML(ex, extra) {
-  if (usesSonic(ex)) return `<canvas class="pip-s pip3d-canvas" width="320" height="320"></canvas>`;
+  if (usesSonic(ex) || usesFloor(ex)) return `<canvas class="pip-s pip3d-canvas" width="320" height="320"></canvas>`;
   let s = ex.rig === "quad" ? buildPipQ(ex.theme)
         : ex.rig === "crab" ? buildPipCrab(ex.theme)
         : ex.rig === "hands" ? buildPipHands(ex.theme)
@@ -36,6 +37,26 @@ function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure }) {
       if (window.Sonic3D) start();
       else window.addEventListener("sonic3d-ready", start, { once: true });
       return () => { canceled = true; window.removeEventListener("sonic3d-ready", start); if (ctrl) ctrl.stop(); };
+    }
+    // 3D Pip creature (floor3d.js) for the all-fours floor moves. Same shared-GL
+    // blit pattern: live on the player stage, static snapshot elsewhere.
+    if (usesFloor(ex)) {
+      let ctrl = null, canceled = false;
+      const start = () => {
+        if (canceled || !window.Floor3D) return;
+        const canvas = el.querySelector("canvas"); if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(64, Math.round((rect.width || 320) * dpr));
+        canvas.height = Math.max(64, Math.round((rect.height || 320) * dpr));
+        const isMain = (className || "").includes("pstage");
+        const pAt = pausedAt != null ? pausedAt : (isMain && !frozen ? null : 0.3);
+        ctrl = window.Floor3D.mount(canvas, ex.id, { speed: spd, pausedAt: pAt, frozen });
+        if (onMeasure) onMeasure((window.Floor3D.DURATION[ex.id] || 2.6) / spd);
+      };
+      if (window.Floor3D) start();
+      else window.addEventListener("floor3d-ready", start, { once: true });
+      return () => { canceled = true; window.removeEventListener("floor3d-ready", start); if (ctrl) ctrl.stop(); };
     }
     // realistic 3D hands rig → WebGL (hands3d.js). Live only on the main player
     // stage; cards & step thumbnails render a single static pose (one shared GL ctx).
