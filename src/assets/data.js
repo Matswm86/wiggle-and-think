@@ -257,11 +257,17 @@ window.SESSION = ["bear","march","fistpalm","freeze","jacks","kanga","palmbeak",
    HYBRID: floor/animal moves (bear, crab, inch, catcow, dog) are intentionally
    absent, so PipStage keeps the SVG mascot for them (Sonic can't do all-fours). */
 window.SONIC_MAP = {
-  march:"Running", simon:"Running", tightrope:"Running",
-  jacks:"Jumping Jacks", kanga:"Jump", starjump:"Jumping",
-  freeze:"Hip Hop Dancing", clap:"Clapping", drum:"Hip Hop Dancing",
-  tree:"Breathing Idle", airplane:"Breathing Idle", flamingo:"Breathing Idle",
-  breathe:"Breathing Idle", windmill:"Waving", lazy8:"Waving",
+  // faithful Mixamo mocap (baked)
+  jacks:"Jumping Jacks", clap:"Clapping", kanga:"Jump", freeze:"Hip Hop Dancing",
+  starjump:"Jumping Jacks",          // star = arms+legs out (was generic "Jumping")
+  // custom-authored faithful clips (tools/blender pose pipeline, see CUSTOM_ANIMS)
+  march:"march", tree:"tree", airplane:"airplane", flamingo:"flamingo",
+  tightrope:"tightrope", windmill:"windmill", breathe:"breathe",
+  // NOT YET FAITHFUL — sequence / fine-hand moves still on a generic clip,
+  // queued for the next custom-authoring batch (simon, drum, lazy8, fistflat,
+  // magicnumbers, noseear). Floor/all-fours (bear/crab/inch/catcow/dog) stay on
+  // the SVG mascot until the engine gets hips-translation support.
+  simon:"Running", drum:"Hip Hop Dancing", lazy8:"Waving",
   fistflat:"Waving", magicnumbers:"Waving", noseear:"Waving"
 };
 
