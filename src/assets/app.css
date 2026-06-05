@@ -238,9 +238,18 @@ input[type=range]{ accent-color:var(--primary); }
   .hero{ grid-template-columns:1fr; } .hero-stage{ height:230px; }
   .hero h1{ font-size:36px; }
   .grid{ grid-template-columns:repeat(2,1fr); }
-  .player-body{ grid-template-columns:1fr; grid-template-rows:auto auto; }
-  .pstage{ width:58%; height:230px; }
-  .pleft, .pright{ overflow:visible; }
+
+  /* On a phone the player is a single column that SCROLLS as one piece, so the
+     stage, breakdown and controls are all reachable (no truncation) and the
+     opaque overlay always fully covers the home page behind it. */
+  .player{ overflow-y:auto; -webkit-overflow-scrolling:touch; background:var(--pbg,#fff4d6); }
+  .player .pbar{ position:sticky; top:0; z-index:6; background:var(--pbg,#fff4d6); }
+  .player-body{ grid-template-columns:1fr; grid-template-rows:auto; flex:0 0 auto;
+    padding:0 16px 10px; gap:14px; }
+  .pleft, .pright{ overflow:visible; min-height:auto; flex:0 0 auto; justify-content:flex-start; }
+  .pstage-wrap{ flex:0 0 auto; width:100%; height:min(72vw,340px); }
+  .pstage{ width:min(82%,340px); height:92%; }
+  .controls{ flex-wrap:wrap; }
 }
 @media (prefers-reduced-motion: reduce){
   .pip .char, .pip-q .q-char{ animation:none !important; }

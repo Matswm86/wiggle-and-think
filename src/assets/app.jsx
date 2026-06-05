@@ -93,6 +93,15 @@ function App() {
 
   React.useEffect(() => { window.__app = { openSingle: setSingle, openSession: () => setSession(true) }; }, []);
 
+  // lock the home page behind any full-screen overlay so it can't scroll or
+  // peek through on a phone (the overlay owns the scroll while open)
+  const overlayOpen = single !== null || session || grown;
+  React.useEffect(() => {
+    document.documentElement.style.overflow = overlayOpen ? "hidden" : "";
+    document.body.style.overflow = overlayOpen ? "hidden" : "";
+    return () => { document.documentElement.style.overflow = ""; document.body.style.overflow = ""; };
+  }, [overlayOpen]);
+
   const cls = [
     t.palette !== "warm" ? "pal-" + t.palette : "",
     t.charSkin !== "sticker" ? "skin-" + t.charSkin : ""
