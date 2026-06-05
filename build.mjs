@@ -31,6 +31,7 @@ for (const name of JS) cpSync(join(SRC, A, `${name}.js`), join(OUT, A, `${name}.
 for (const name of CSS) cpSync(join(SRC, A, `${name}.css`), join(OUT, A, `${name}.css`));
 cpSync(join(SRC, A, "vendor"), join(OUT, A, "vendor"), { recursive: true });
 cpSync(join(SRC, A, "models"), join(OUT, A, "models"), { recursive: true });   // rigged hand glTF
+cpSync(join(SRC, A, "anim"), join(OUT, A, "anim"), { recursive: true });
 
 // rewrite index.html: drop unpkg + babel, vendor react, .jsx→.js, bump ?v=
 let html = readFileSync(join(SRC, "index.html"), "utf8");
