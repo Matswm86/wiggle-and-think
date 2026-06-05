@@ -21,7 +21,7 @@ const MODEL_URL = "assets/models/rigged_hand.glb";
 const RES = 620;                          // offscreen render resolution
 const FINGERS = ["index", "middle", "ring", "pinky"];
 
-const DURATION = { fingertips: 4.4, openclose: 5.0, twirls: 3.4, tappairs: 2.4, thumbsinout: 2.6 };
+const DURATION = { palmbeak: 2.8, fistpalm: 2.6, pointpalm: 2.8, peacepalm: 2.8, beakfist: 3.0 };
 
 let renderer = null, scene = null, camera = null;
 let hands = null;                         // {l:{bones,rest}, r:{bones,rest}}
@@ -101,44 +101,40 @@ function poseHand(h, pose) {
   if (tb[2]) tb[2].rotation.x += 0.1 + op * 0.4;
 }
 
-// ---- per-exercise pose timelines (t 0..1) --------------------------
-const seqPulse = (t, c, w, peak) => { let d = Math.abs((t - c + 1) % 1); if (d > 0.5) d = 1 - d; return d < w ? peak * (1 - d / w) : 0; };
-const ramp = (p, s, l) => Math.max(0, Math.min(1, (p - s) / l));
-const POSES = {
-  fingertips(t) {                                   // active finger curls to meet opposed thumb
-    const centers = [0, 1 / 8, 2 / 8, 3 / 8];
-    const f = [0, 1, 2, 3].map((i) => {
-      const a = seqPulse(t, centers[i], 0.085, 0.7);
-      const b = i < 3 ? seqPulse(t, 1 - centers[i] - 0.02, 0.085, 0.7) : 0;
-      return 0.05 + Math.max(a, b);
-    });
-    return { L: { fingers: f, thumb: 0.85 }, R: { fingers: f.slice(), thumb: 0.85 } };
-  },
-  openclose(t) {                                    // L opens while R closes, then swap
-    const open = (p) => ({ fingers: [1 - ramp(p, .16, .24), 1 - ramp(p, .32, .24), 1 - ramp(p, .48, .24), 1 - ramp(p, .64, .24)], thumb: 1 - ramp(p, 0, .24) });
-    const close = (p) => ({ fingers: [ramp(p, .48, .24), ramp(p, .32, .24), ramp(p, .16, .24), ramp(p, 0, .24)], thumb: ramp(p, .64, .24) });
-    if (t < 0.5) { const p = t / 0.5; return { L: open(p), R: close(p) }; }
-    const p = (t - 0.5) / 0.5; return { L: close(p), R: open(p) };
-  },
-  twirls(t) {                                       // cupped; active pair eases out
-    const cup = [0.5, 0.5, 0.5, 0.5];
-    const phase = Math.floor(t * 4) % 4;
-    const f = cup.slice(); if (phase >= 1) f[phase - 1] = 0.2;
-    const thumb = phase === 0 ? 0.85 : 0.7;
-    return { L: { fingers: f, thumb }, R: { fingers: f.slice(), thumb } };
-  },
-  tappairs(t) {                                     // resting; named pair pops up
-    const rest = 0.4, up = 0.0, f = [rest, rest, rest, rest], ph = t % 1;
-    const set = ph < 1 / 3 ? [0, 1] : ph < 2 / 3 ? [1, 2, 3] : [0, 3];
-    set.forEach((i) => { f[i] = up; });
-    return { L: { fingers: f, thumb: 0.45 }, R: { fingers: f.slice(), thumb: 0.45 } };
-  },
-  thumbsinout(t) {                                  // fists; thumbs out then tucked
-    const fist = [1, 1, 1, 1], op = t < 0.5 ? 0 : 1;
-    return { L: { fingers: fist, thumb: op }, R: { fingers: fist.slice(), thumb: op } };
-  },
+// ---- bimanual shape-swap drills -----------------------------------
+// Each hand holds a discrete, human-natural SHAPE; the two hands swap
+// shapes simultaneously and rhythmically (palm/fist/beak/point/peace).
+const SHAPES = {
+  palm:  { fingers: [0.0, 0.0, 0.0, 0.0], thumb: 0.05 },   // flat open hand
+  fist:  { fingers: [1.0, 1.0, 1.0, 1.0], thumb: 0.92 },   // closed fist, thumb across
+  beak:  { fingers: [0.52, 0.52, 0.52, 0.52], thumb: 1.0 },// all tips pinched — a bird beak
+  point: { fingers: [0.0, 1.0, 1.0, 1.0], thumb: 0.82 },   // index up, the rest folded
+  peace: { fingers: [0.0, 0.0, 1.0, 1.0], thumb: 0.82 },   // index + middle up (peace sign)
 };
-const NEUTRAL = () => ({ L: { fingers: [.1, .1, .1, .1], thumb: .2 }, R: { fingers: [.1, .1, .1, .1], thumb: .2 } });
+const smooth = (k) => k * k * (3 - 2 * k);
+function lerpShape(a, b, k) {
+  return { fingers: a.fingers.map((v, i) => v + (b.fingers[i] - v) * k), thumb: a.thumb + (b.thumb - a.thumb) * k };
+}
+// hold A, quick switch, hold B, quick switch back — both hands opposite
+function swap(A, B) {
+  return (t) => {
+    const p = ((t % 1) + 1) % 1;
+    let k;
+    if (p < 0.40) k = 0;
+    else if (p < 0.50) k = smooth((p - 0.40) / 0.10);
+    else if (p < 0.90) k = 1;
+    else k = 1 - smooth((p - 0.90) / 0.10);
+    return { L: lerpShape(A, B, k), R: lerpShape(B, A, k) };
+  };
+}
+const POSES = {
+  palmbeak:  swap(SHAPES.palm,  SHAPES.beak),
+  fistpalm:  swap(SHAPES.fist,  SHAPES.palm),
+  pointpalm: swap(SHAPES.point, SHAPES.palm),
+  peacepalm: swap(SHAPES.peace, SHAPES.palm),
+  beakfist:  swap(SHAPES.beak,  SHAPES.fist),
+};
+const NEUTRAL = () => ({ L: { ...SHAPES.palm }, R: { ...SHAPES.palm } });
 
 // snap a hand so its wrist bone sits at (x,y) in scene space (robust placement)
 function placeHand(h, x, y) {
@@ -151,7 +147,7 @@ function setPose(exId, t) {
   const pose = (POSES[exId] || NEUTRAL)(t);
   poseHand(hands.l, pose.L);
   poseHand(hands.r, pose.R);
-  const near = exId === "twirls" ? 0.5 : 0.98;  // wrist x; hands fan up & inward
+  const near = 0.98;                            // wrist x; hands fan up & inward
   hands.l.group.rotation.z = -0.13; hands.r.group.rotation.z = 0.13;  // slight inward tilt
   placeHand(hands.l, -near, -1.45);
   placeHand(hands.r, near, -1.45);

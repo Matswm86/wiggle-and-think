@@ -8,12 +8,13 @@ const SPEEDS = { slow: 0.5, normal: 0.85, fast: 1.35 };
 
 /* which SFX each Clever-Hands move plays as its phases advance */
 const SFX_FOR = {
-  fingertips: () => "tap",
-  tappairs: () => "tap",
-  openclose: () => "whoosh",
-  thumbsinout: () => "whoosh",
+  // bimanual swap drills: a soft click each time the hands switch shapes
+  palmbeak: () => "tap",
+  fistpalm: () => "tap",
+  pointpalm: () => "tap",
+  peacepalm: () => "tap",
+  beakfist: () => "tap",
   fistflat: () => "whoosh",
-  twirls: () => "trace",
   magicnumbers: () => "trace",
   noseear: (i) => (i === 1 ? "clap" : null),
 };
@@ -85,7 +86,6 @@ function Overlay({ ex }) {
           <span style={{ color: a, transform: "scaleX(-1)" }}>3</span>
           <span style={{ color: a }}>3</span>
         </div>}
-      {(ex.id === "fingertips" || ex.id === "tappairs") && <CountDots ex={ex} n={ex.id === "tappairs" ? 3 : 4} />}
       {ex.id === "breathe" &&
         <div className="breathe-pacer" aria-hidden="true"><div className="bp-ring" style={{ borderColor: `color-mix(in srgb, ${a} 60%, #fff)` }}><span className="bp-txt" style={{ color: a }}>breathe</span></div></div>}
     </React.Fragment>
