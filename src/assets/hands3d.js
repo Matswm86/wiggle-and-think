@@ -20,6 +20,7 @@ import { clone as skeletonClone } from "./vendor/utils/SkeletonUtils.js";
 const MODEL_URL = "assets/models/rigged_hand.glb";
 const RES = 620;                          // offscreen render resolution
 const FINGERS = ["index", "middle", "ring", "pinky"];
+const clamp = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 const DURATION = { palmbeak: 2.8, fistpalm: 2.6, pointpalm: 2.8, peacepalm: 2.8, beakfist: 3.0 };
 
@@ -77,43 +78,64 @@ function buildHand(model, side, q) {
   return { group: place, bones, rest, anchor };
 }
 
-// reset a hand to its rest pose
-function resetHand(h) {
-  ["thumb", ...FINGERS].forEach((f) => h.bones[f].forEach((b, i) => {
-    if (b && h.rest[`${f}${i}`]) b.rotation.copy(h.rest[`${f}${i}`]);
-  }));
+// Ground-truth bone poses sampled from the model's own "Open/Close" clip
+// (the creator rigged it cleanly): openQ = flat hand, closedQ = fist, per bone name.
+let openQ = {}, closedQ = {};
+const _add = new THREE.Quaternion(), _eul = new THREE.Euler();
+const sideSign = [1, 0.4, -0.4, -1];                // index..pinky squeeze toward a beak point
+
+function sampleOpenClose(anims, rootObj) {
+  const clip = (anims || []).find((a) => /open|clos/i.test(a.name)) || (anims || [])[0];
+  if (!clip) return false;
+  const mixer = new THREE.AnimationMixer(rootObj); mixer.clipAction(clip).play();
+  // scan the whole clip; the curl metric = total flexion across all finger phalanges.
+  const fbones = [];
+  rootObj.traverse((o) => { if (o.isBone && /^(index|middle|ring|pinky)_0[23]R_/.test(o.name)) fbones.push(o.name); });
+  const N = 30; let lo = { c: 1e9 }, hi = { c: -1e9 };
+  for (let i = 0; i <= N; i++) {
+    mixer.setTime(clip.duration * i / N); rootObj.updateMatrixWorld(true);
+    const m = {}; rootObj.traverse((o) => { if (o.isBone) m[o.name] = o.quaternion.clone(); });
+    let c = 0; fbones.forEach((n) => { if (m[n]) c += 2 * Math.acos(Math.min(1, Math.abs(m[n].w))); });
+    if (c < lo.c) lo = { c, m }; if (c > hi.c) hi = { c, m };
+  }
+  mixer.stopAllAction(); mixer.uncacheRoot(rootObj);
+  openQ = lo.m; closedQ = hi.m;
+  return hi.c - lo.c > 0.5;   // false if the clip never actually folds (then poses stay open)
 }
 
-// apply a pose {fingers:[i,m,r,p] curl 0..1, thumb 0..1} to one hand
+// blend a bone from open→closed by c (0..1)
+function setBone(b, c) { const o = openQ[b.name], cl = closedQ[b.name]; if (o && cl) b.quaternion.copy(o).slerp(cl, c); }
+
+// apply a pose to one hand. fingers[4]/thumb in 0..1 (0 = flat/open, 1 = fully folded).
+// adduct 0..1 squeezes the fingers toward a point (for the beak shape).
 function poseHand(h, pose) {
-  resetHand(h);
-  // finger flexion: curl folds toward palm about local X; cascade across phalanges
   FINGERS.forEach((f, fi) => {
-    const c = Math.max(-0.25, Math.min(1.1, pose.fingers[fi]));
-    const seg = [1.0, 0.92, 0.6];      // proximal leads; tips don't over-fold/cross
-    h.bones[f].forEach((b, j) => { if (b) b.rotation.x += c * 0.82 * seg[j]; });
+    const c = clamp(pose.fingers[fi]);
+    h.bones[f].forEach((b, j) => {
+      if (!b) return;
+      setBone(b, c);
+      if (j === 0 && pose.adduct) { _add.setFromEuler(_eul.set(0, 0, sideSign[fi] * pose.adduct * 0.32)); b.quaternion.multiply(_add); }
+    });
   });
-  // thumb: op 0 = out to the side, 1 = across the palm toward the fingers
-  const op = Math.max(0, Math.min(1, pose.thumb));
-  const tb = h.bones.thumb;
-  if (tb[0]) { tb[0].rotation.x += 0.25 + op * 0.55; tb[0].rotation.z += -0.15 - op * 0.85; tb[0].rotation.y += op * 0.5; }
-  if (tb[1]) tb[1].rotation.x += 0.1 + op * 0.6;
-  if (tb[2]) tb[2].rotation.x += 0.1 + op * 0.4;
+  const op = clamp(pose.thumb);
+  h.bones.thumb.forEach((b) => { if (b) setBone(b, op); });
 }
 
 // ---- bimanual shape-swap drills -----------------------------------
 // Each hand holds a discrete, human-natural SHAPE; the two hands swap
 // shapes simultaneously and rhythmically (palm/fist/beak/point/peace).
+// fingers/thumb in 0..1 = blend from the model's OPEN (flat) to CLOSED (fist) pose
 const SHAPES = {
-  palm:  { fingers: [0.0, 0.0, 0.0, 0.0], thumb: 0.05 },   // flat open hand
-  fist:  { fingers: [1.0, 1.0, 1.0, 1.0], thumb: 0.92 },   // closed fist, thumb across
-  beak:  { fingers: [0.52, 0.52, 0.52, 0.52], thumb: 1.0 },// all tips pinched — a bird beak
-  point: { fingers: [0.0, 1.0, 1.0, 1.0], thumb: 0.82 },   // index up, the rest folded
-  peace: { fingers: [0.0, 0.0, 1.0, 1.0], thumb: 0.82 },   // index + middle up (peace sign)
+  palm:  { fingers: [0, 0, 0, 0], thumb: 0 },                    // flat open hand
+  fist:  { fingers: [1, 1, 1, 1], thumb: 1 },                    // fully closed fist
+  beak:  { fingers: [0.6, 0.6, 0.6, 0.6], thumb: 0.85, adduct: 1 }, // fingers squeezed to a point
+  point: { fingers: [0, 1, 1, 1], thumb: 1 },                    // ONLY index up, rest folded
+  peace: { fingers: [0, 0, 1, 1], thumb: 1 },                    // index + middle up, rest folded
 };
 const smooth = (k) => k * k * (3 - 2 * k);
 function lerpShape(a, b, k) {
-  return { fingers: a.fingers.map((v, i) => v + (b.fingers[i] - v) * k), thumb: a.thumb + (b.thumb - a.thumb) * k };
+  const aa = a.adduct || 0, ba = b.adduct || 0;
+  return { fingers: a.fingers.map((v, i) => v + (b.fingers[i] - v) * k), thumb: a.thumb + (b.thumb - a.thumb) * k, adduct: aa + (ba - aa) * k };
 }
 // hold A, quick switch, hold B, quick switch back — both hands opposite
 function swap(A, B) {
@@ -185,6 +207,7 @@ function loadModel() {
     const rgt = buildHand(right, "r", q);
     scene.add(left.group, rgt.group);
     hands = { l: left, r: rgt };
+    sampleOpenClose(gltf.animations, right);   // capture clean flat-palm & fist poses
     ready = true; readyCbs.splice(0).forEach((fn) => fn());
   }, undefined, (e) => { console.error("Hands3D model load failed:", e); });
 }
