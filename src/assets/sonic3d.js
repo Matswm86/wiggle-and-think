@@ -31,7 +31,7 @@ let frameCtr = null, frameDist = 0;          // stored from frameCamera, for per
 // so they get a 3/4 view; frontal poses stay at the default front (0,0).
 const SONIC_VIEW = {
   march: { az: 40 }, tightrope: { az: 42 }, flamingo: { az: 24, el: 6 },
-  airplane: { az: 22, el: 8 }, drum: { az: 36 }, kanga: { az: 18 },
+  airplane: { az: 70, el: 6 }, windmill: { az: 40, el: 4 }, drum: { az: 36 }, kanga: { az: 18 },
 };
 function applyView(exId) {
   if (!frameCtr) return;

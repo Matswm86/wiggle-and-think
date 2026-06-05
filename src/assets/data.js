@@ -261,17 +261,16 @@ window.SESSION = ["bear","march","fistpalm","freeze","jacks","kanga","palmbeak",
 window.SONIC_MAP = {
   // faithful Mixamo mocap (baked)
   jacks:"Jumping Jacks", clap:"Clapping", kanga:"Jump", freeze:"Hip Hop Dancing",
-  starjump:"Jumping Jacks",          // star = arms+legs out (was generic "Jumping")
+  starjump:"starjump",               // custom: big X, arms up-out + legs apart (distinct from jacks)
   // custom-authored faithful clips (tools/blender pose pipeline, see CUSTOM_ANIMS)
   march:"march", tree:"tree", airplane:"airplane", flamingo:"flamingo",
   tightrope:"tightrope", windmill:"windmill", breathe:"breathe",
-  // arm-trace moves (overlay carries the specific shape: figure-8 / ghost numbers)
-  lazy8:"lazy8", magicnumbers:"magicnumbers",
-  // cross-body limb gestures (best-effort: hand-to-body-part can't be IK-placed on
-  // a full-body character; caption + step thumbnails carry the precise move)
-  noseear:"noseear", fistflat:"fistflat",
+  fistflat:"fistflat",
   // body-drum sequence: stomp-stomp-clap-pat
   drum:"drum"
+  // lazy8 / magicnumbers / noseear are fine-hand / cross-body moves that don't read
+  // on a full-body character; they fall back to the accurate SVG mascot (overlays
+  // carry the figure-8 / numbers) pending replacement with dedicated hand-rig moves.
   // Floor/all-fours (bear/crab/inch/catcow/dog) render via floor3d.js (window.FLOOR_MAP),
   // not Sonic — handled in PipStage, not here.
 };

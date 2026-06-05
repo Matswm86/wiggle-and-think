@@ -37,7 +37,8 @@ def set_pose(p):
         ch = CHILD.get(base)
         if not ch: continue
         side = "Left" if n.startswith("Left") else ("Right" if n.startswith("Right") else "")
-        aimv(n, side + ch, p[n])
+        t = p[n]
+        aimv(n, side + ch, (t[0], t[1], -t[2]))   # forward is +Z in armature space; literals use -Z, flip here
     bpy.context.view_layer.update()
 
 # direction shorthands (armature frame)
@@ -159,6 +160,15 @@ MOVES = {
    (44, P(LeftArm=(0.28,-0.6,-0.5), LeftForeArm=(0.2,-0.72,-0.4), RightArm=(-0.28,-0.6,-0.5), RightForeArm=(-0.2,-0.72,-0.4))),
    (52, P(RightUpLeg=(0,0.5,-0.82), RightLeg=(0,-1,-0.1), LeftUpLeg=(0,-1,0), LeftLeg=(0,-1,-0.05),
           LeftArm=(0.25,-0.35,-0.55), LeftForeArm=(0.1,0.1,-0.95), RightArm=(-0.25,-0.35,-0.55), RightForeArm=(-0.1,0.1,-0.95)))],
+
+ # STAR JUMP (front): explode to a big X — arms up-out AND legs apart — then back together
+ "starjump": [
+   (1,  P(LeftArm=(0.32,-0.9,0), LeftForeArm=(0.32,-0.9,0), RightArm=(-0.32,-0.9,0), RightForeArm=(-0.32,-0.9,0),
+          LeftUpLeg=(0,-1,0), LeftLeg=(0,-1,-0.05), RightUpLeg=(0,-1,0), RightLeg=(0,-1,-0.05))),
+   (14, P(LeftArm=(0.72,0.66,0), LeftForeArm=(0.74,0.62,0), RightArm=(-0.72,0.66,0), RightForeArm=(-0.74,0.62,0),
+          LeftUpLeg=(0.55,-0.82,0), LeftLeg=(0.5,-0.86,0), RightUpLeg=(-0.55,-0.82,0), RightLeg=(-0.5,-0.86,0))),
+   (28, P(LeftArm=(0.32,-0.9,0), LeftForeArm=(0.32,-0.9,0), RightArm=(-0.32,-0.9,0), RightForeArm=(-0.32,-0.9,0),
+          LeftUpLeg=(0,-1,0), LeftLeg=(0,-1,-0.05), RightUpLeg=(0,-1,0), RightLeg=(0,-1,-0.05)))],
 }
 
 KEEP = {"Jumping Jacks", "Clapping", "Jump", "Hip Hop Dancing", "Running", "Jumping", "Breathing Idle", "Waving"}
