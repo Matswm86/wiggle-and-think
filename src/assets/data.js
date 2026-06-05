@@ -104,13 +104,15 @@ window.EXERCISES = [
     safety:"Give everyone an arm's length of space. Stop if anyone runs or bumps.",
     think:"This stop-and-go is exactly the skill that builds self-control." },
 
-  { id:"simon", n:13, name:"Simon Says", group:"Listen & Move Games", rig:"biped", anim:"ex-simon",
-    theme:{body:"#f0a05a",belly:"#fbe6d2",accent:"#c96a1e",ears:"crown"},
-    kid:"Only do the move if 'Simon says' first. Listen carefully!",
-    steps:["A leader calls out moves","Only move if they say 'Simon says' first","Try one-leg stands, star shapes, hand-to-knee","Take turns being the leader"],
-    activates:"Listening, self-control (don't move on a trick!), body-part awareness.",
-    evidence:"STRONG", band:"B", bpm:[80,95], duration:"3–5 min",
-    safety:"No jumping on hard floors; no eyes-closed moves in a crowd." },
+  { id:"piano", n:13, name:"Piano Fingers", group:"Clever Hands", rig:"hands", anim:"ex-piano",
+    theme:{body:"#8ab4f0",belly:"#e4eefb",accent:"#4d96ff",ears:"antennae"},
+    kid:"Tap your fingers down one at a time, like playing a tiny piano!",
+    steps:["Hold both hands up, fingers spread wide","Tap one finger down at a time: 1–2–3–4","Then tap back the other way: 4–3–2–1","Keep a steady beat with both hands"],
+    easy:"Use one hand and go slow — one clear finger at a time.",
+    tricky:"Both hands together, then speed the beat up.",
+    activates:"Finger isolation and control (fine-motor skill) and steady timing.",
+    evidence:"MODERATE", band:"B", bpm:[80,100], duration:"1–2 min",
+    think:"Moving just one finger while the others wait is real brain-and-hand work." },
 
   { id:"clap", n:14, name:"Clap & Echo", group:"Rhythm & Body Drum", rig:"biped", anim:"ex-clap",
     theme:{body:"#e8b04a",belly:"#faecc9",accent:"#b9831f",ears:"none"},
@@ -263,12 +265,15 @@ window.SONIC_MAP = {
   // custom-authored faithful clips (tools/blender pose pipeline, see CUSTOM_ANIMS)
   march:"march", tree:"tree", airplane:"airplane", flamingo:"flamingo",
   tightrope:"tightrope", windmill:"windmill", breathe:"breathe",
-  // NOT YET FAITHFUL — sequence / fine-hand moves still on a generic clip,
-  // queued for the next custom-authoring batch (simon, drum, lazy8, fistflat,
-  // magicnumbers, noseear). Floor/all-fours (bear/crab/inch/catcow/dog) stay on
-  // the SVG mascot until the engine gets hips-translation support.
-  simon:"Running", drum:"Hip Hop Dancing", lazy8:"Waving",
-  fistflat:"Waving", magicnumbers:"Waving", noseear:"Waving"
+  // arm-trace moves (overlay carries the specific shape: figure-8 / ghost numbers)
+  lazy8:"lazy8", magicnumbers:"magicnumbers",
+  // cross-body limb gestures (best-effort: hand-to-body-part can't be IK-placed on
+  // a full-body character; caption + step thumbnails carry the precise move)
+  noseear:"noseear", fistflat:"fistflat",
+  // still on a generic clip, queued for the next batch: drum (stomp-clap-pat).
+  // Floor/all-fours (bear/crab/inch/catcow/dog) stay on the SVG mascot until the
+  // engine gets hips-translation support.
+  drum:"Hip Hop Dancing"
 };
 
 /* music band reference */
@@ -296,7 +301,7 @@ window.PHASES = {
   catcow:[{p:0,t:"Cow — breathe IN, drop your belly, look up"},{p:50,t:"Cat — breathe OUT, round your back up"}],
   dog:[{p:5,t:"Start on hands and knees"},{p:45,t:"Push your hips up to an upside-down V"},{p:80,t:"Head hangs, wag your tail"}],
   freeze:[{p:0,t:"Dance with your whole body!"},{p:50,t:"Music stops — FREEZE like a statue!",freeze:true}],
-  simon:[{p:5,t:"Listen carefully…"},{p:40,t:"“Simon says” — do the move"},{p:85,t:"No “Simon”? Don’t move — stay still!"}],
+  piano:[{p:5,t:"Hands up, fingers spread"},{p:35,t:"Tap finger 1, then 2…"},{p:60,t:"…3, then 4"},{p:90,t:"Tap back down: 4–3–2–1"}],
   clap:[{p:0,t:"Hands apart, get ready"},{p:25,t:"CLAP the pattern"},{p:75,t:"Friends echo it back to you"}],
   drum:[{p:0,t:"STOMP your feet (×2)"},{p:62,t:"CLAP your hands"},{p:90,t:"PAT your thighs"}],
   kanga:[{p:14,t:"Squat down, little paws up"},{p:42,t:"Jump straight up, high!"},{p:70,t:"Land soft — bend your knees"}],

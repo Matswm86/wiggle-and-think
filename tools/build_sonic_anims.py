@@ -47,6 +47,22 @@ MOVES={
  "breathe":[(1,P(LeftArm=(0,-12,0),RightArm=(0,12,0))),
             (30,P(LeftArm=(120,-45,0),RightArm=(120,45,0))),
             (60,P(LeftArm=(0,-12,0),RightArm=(0,12,0)))],
+ # arm-moves whose specific meaning is carried by the on-screen overlay (ov8 / numghost)
+ "lazy8":[(1,P(RightArm=(125,55,0),RightForeArm=(10,0,0),LeftArm=(0,-12,0))),
+          (20,P(RightArm=(135,15,0),RightForeArm=(10,0,0),LeftArm=(0,-12,0))),
+          (40,P(RightArm=(125,-10,0),RightForeArm=(10,0,0),LeftArm=(0,-12,0))),
+          (60,P(RightArm=(125,55,0),RightForeArm=(10,0,0),LeftArm=(0,-12,0)))],
+ "magicnumbers":[(1,P(LeftArm=(125,-45,0),RightArm=(125,45,0))),
+                 (20,P(LeftArm=(130,-25,0),RightArm=(130,25,0))),
+                 (40,P(LeftArm=(125,-50,0),RightArm=(125,50,0))),
+                 (60,P(LeftArm=(125,-45,0),RightArm=(125,45,0)))],
+ # best-effort cross-body limb gestures (hand-to-body-part can't be IK-placed on Sonic)
+ "noseear":[(1,P(RightArm=(160,-15,0),RightForeArm=(120,0,0),LeftArm=(105,20,0),LeftForeArm=(120,0,0))),
+            (20,P(LeftArm=(160,15,0),LeftForeArm=(120,0,0),RightArm=(105,-20,0),RightForeArm=(120,0,0))),
+            (40,P(RightArm=(160,-15,0),RightForeArm=(120,0,0),LeftArm=(105,20,0),LeftForeArm=(120,0,0)))],
+ "fistflat":[(1,P(RightArm=(0,95,0),LeftArm=(75,50,0),LeftForeArm=(105,0,0))),
+             (20,P(LeftArm=(0,-95,0),RightArm=(75,-50,0),RightForeArm=(105,0,0))),
+             (40,P(RightArm=(0,95,0),LeftArm=(75,50,0),LeftForeArm=(105,0,0)))],
 }
 KEEP={"Jumping Jacks","Clapping","Jump","Hip Hop Dancing","Running","Jumping","Breathing Idle","Waving"}
 # rename/keep real clips, delete junk

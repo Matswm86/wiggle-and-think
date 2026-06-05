@@ -22,7 +22,7 @@ const RES = 620;                          // offscreen render resolution
 const FINGERS = ["index", "middle", "ring", "pinky"];
 const clamp = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
-const DURATION = { palmbeak: 2.8, fistpalm: 2.6, pointpalm: 2.8, peacepalm: 2.8, beakfist: 3.0 };
+const DURATION = { palmbeak: 2.8, fistpalm: 2.6, pointpalm: 2.8, peacepalm: 2.8, beakfist: 3.0, piano: 3.4 };
 
 let renderer = null, scene = null, camera = null;
 let hands = null;                         // {l:{bones,rest}, r:{bones,rest}}
@@ -149,12 +149,26 @@ function swap(A, B) {
     return { L: lerpShape(A, B, k), R: lerpShape(B, A, k) };
   };
 }
+// fine-motor finger isolation: one finger taps down at a time (index→pinky→back),
+// both hands together. A single localized curl pulse travels across the four fingers.
+function pianoWave() {
+  const n = FINGERS.length;                              // 4
+  return (t) => {
+    const p = ((t % 1) + 1) % 1;
+    const phase = p * n * 2;                             // 0..2n: down the row, then back
+    const sweep = phase <= n ? phase : (2 * n - phase);  // 0→n→0
+    const curlAt = (i) => clamp(1 - Math.abs(sweep - (i + 0.5)) * 1.8);
+    const pose = { fingers: FINGERS.map((_, i) => curlAt(i)), thumb: 0 };
+    return { L: pose, R: pose };
+  };
+}
 const POSES = {
   palmbeak:  swap(SHAPES.palm,  SHAPES.beak),
   fistpalm:  swap(SHAPES.fist,  SHAPES.palm),
   pointpalm: swap(SHAPES.point, SHAPES.palm),
   peacepalm: swap(SHAPES.peace, SHAPES.palm),
   beakfist:  swap(SHAPES.beak,  SHAPES.fist),
+  piano:     pianoWave(),
 };
 const NEUTRAL = () => ({ L: { ...SHAPES.palm }, R: { ...SHAPES.palm } });
 
