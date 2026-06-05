@@ -270,10 +270,10 @@ window.SONIC_MAP = {
   // cross-body limb gestures (best-effort: hand-to-body-part can't be IK-placed on
   // a full-body character; caption + step thumbnails carry the precise move)
   noseear:"noseear", fistflat:"fistflat",
-  // still on a generic clip, queued for the next batch: drum (stomp-clap-pat).
-  // Floor/all-fours (bear/crab/inch/catcow/dog) stay on the SVG mascot until the
-  // engine gets hips-translation support.
-  drum:"Hip Hop Dancing"
+  // body-drum sequence: stomp-stomp-clap-pat
+  drum:"drum"
+  // Floor/all-fours (bear/crab/inch/catcow/dog) render via floor3d.js (window.FLOOR_MAP),
+  // not Sonic — handled in PipStage, not here.
 };
 
 /* 3D Pip creature (floor3d.js) renders the all-fours floor moves — Sonic's

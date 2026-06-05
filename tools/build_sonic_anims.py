@@ -63,6 +63,12 @@ MOVES={
  "fistflat":[(1,P(RightArm=(0,95,0),LeftArm=(75,50,0),LeftForeArm=(105,0,0))),
              (20,P(LeftArm=(0,-95,0),RightArm=(75,-50,0),RightForeArm=(105,0,0))),
              (40,P(RightArm=(0,95,0),LeftArm=(75,50,0),LeftForeArm=(105,0,0)))],
+ # Body Drum: stomp (R knee) – stomp (L knee) – CLAP (hands meet) – PAT (thighs)
+ "drum":[(1,P(RightUpLeg=(-55,0,0),RightLeg=(45,0,0),LeftArm=(18,-22,0),RightArm=(18,22,0),LeftForeArm=(28,0,0),RightForeArm=(28,0,0))),
+         (12,P(LeftUpLeg=(-55,0,0),LeftLeg=(45,0,0),LeftArm=(18,-22,0),RightArm=(18,22,0),LeftForeArm=(28,0,0),RightForeArm=(28,0,0))),
+         (30,P(LeftArm=(40,72,0),RightArm=(40,-72,0),LeftForeArm=(38,0,0),RightForeArm=(38,0,0))),
+         (44,P(LeftArm=(22,8,0),RightArm=(22,-8,0),LeftForeArm=(62,0,0),RightForeArm=(62,0,0))),
+         (52,P(RightUpLeg=(-55,0,0),RightLeg=(45,0,0),LeftArm=(18,-22,0),RightArm=(18,22,0),LeftForeArm=(28,0,0),RightForeArm=(28,0,0)))],
 }
 KEEP={"Jumping Jacks","Clapping","Jump","Hip Hop Dancing","Running","Jumping","Breathing Idle","Waving"}
 # rename/keep real clips, delete junk
