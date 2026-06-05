@@ -4,11 +4,24 @@ Live: **https://play.mwmai.no**
 
 A free, science-grounded movement site: **28 exercises** (20 full-body + 8
 "Clever Hands" finger/coordination moves), an articulated mascot ("Pip") whose
-poses are real CSS-keyframe movements, a JS forward-kinematics **hands rig** for
-the finger moves (`hands-anim.js`), a synced step-by-step pose breakdown, a
-guided session mode, and an in-browser Web-Audio beat engine (no audio files, no
-licensing). The honest-science framing (no Brain-Gym / hemisphere / BDNF myths)
-comes from the research docs in `src/_research/` (ETNIMU is the finger-move source).
+poses are real CSS-keyframe movements, **realistic 3D hands** (Three.js/WebGL +
+a rigged glTF model, `hands3d.js`) for the finger close-ups, a synced
+step-by-step pose breakdown, a guided session mode, and an in-browser Web-Audio
+beat engine (no audio files, no licensing). The honest-science framing (no
+Brain-Gym / hemisphere / BDNF myths) comes from the research docs in
+`src/_research/` (ETNIMU is the finger-move source).
+
+### 3D hands (cards 21–25)
+`hands3d.js` loads `assets/models/rigged_hand.glb` (rigged, 69-bone, textured),
+mirrors it for the left hand, and rotates the real finger bones (flexion =
+bone local-X) per exercise. ONE shared offscreen WebGLRenderer feeds every
+canvas (live on the player stage; static snapshots for the grid + thumbnails)
+to stay under the browser WebGL-context cap. Three.js is vendored under
+`assets/vendor/` with **relative** imports (no importmap) so the strict CSP
+holds. **Deploy note:** the `play.mwmai.no` CSP needs `blob:` in
+`connect-src` + `img-src` + `worker-src` for glTF embedded-texture decode.
+Pose choreography lives in `POSES`/`poseHand` and can be tuned with a
+Playwright WebGL-screenshot harness.
 
 ## MERGE NOTE (important)
 The design engine regenerates the app from the *original* demo, so a fresh
