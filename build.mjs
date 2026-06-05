@@ -13,8 +13,8 @@ mkdirSync(join(OUT, A, "vendor"), { recursive: true });
 
 // JSX files transpiled to .js (order preserved by index.html script tags)
 const JSX = ["tweaks-panel", "ui", "player", "grownups", "app"];
-// plain assets copied verbatim
-const JS = ["pip", "hands-anim", "data", "audio"];
+// plain assets copied verbatim (hands3d.js is an ES module, copied as-is)
+const JS = ["pip", "data", "audio", "hands3d"];
 const CSS = ["char", "anim", "app"];
 
 for (const name of JSX) {
@@ -30,6 +30,7 @@ for (const name of JSX) {
 for (const name of JS) cpSync(join(SRC, A, `${name}.js`), join(OUT, A, `${name}.js`));
 for (const name of CSS) cpSync(join(SRC, A, `${name}.css`), join(OUT, A, `${name}.css`));
 cpSync(join(SRC, A, "vendor"), join(OUT, A, "vendor"), { recursive: true });
+cpSync(join(SRC, A, "models"), join(OUT, A, "models"), { recursive: true });   // rigged hand glTF
 
 // rewrite index.html: drop unpkg + babel, vendor react, .jsx→.js, bump ?v=
 let html = readFileSync(join(SRC, "index.html"), "utf8");

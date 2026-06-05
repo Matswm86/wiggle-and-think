@@ -215,33 +215,9 @@
     </svg>`;
   };
 
-  // ---------- HANDS CLOSE-UP (front: two REALISTIC hands; fingers drawn by hands-anim.js) ----------
-  const HSKIN = "#ecb78f", HSKIN_SH = "#d99f76", HSKO = "#b27c54";
-  window.buildPipHands = function (theme) {
-    const t = dflt(theme);
-    function hand(side, cx, sleeve) {
-      const inner = side === "l" ? 1 : -1;
-      return `<g class="hand-root-${side}">
-        <!-- sleeve / forearm carries the L-R colour code (static) -->
-        <path d="M ${cx - 27} 224 L ${cx + 27} 224 L ${cx + 27 + inner * -7} 300 L ${cx - 27 + inner * -7} 300 Z"
-          fill="${sleeve}" stroke="${HSKO}" stroke-width="3.5" stroke-linejoin="round" opacity=".96"/>
-        <rect x="${cx - 30}" y="216" width="60" height="16" rx="8" fill="${t.accent}" stroke="${HSKO}" stroke-width="3"/>
-        <!-- movable hand: palm + fingers (translated for air-drawing) -->
-        <g class="h-${side}">
-          <path d="M ${cx - 32} 152 Q ${cx - 35} 202 ${cx - 23} 224 L ${cx + 23} 224 Q ${cx + 35} 202 ${cx + 32} 152
-            Q ${cx} 140 ${cx - 32} 152 Z" fill="${HSKIN}" stroke="${HSKO}" stroke-width="3"/>
-          <ellipse cx="${cx}" cy="196" rx="19" ry="22" fill="${HSKIN_SH}" opacity=".3"/>
-          <g class="digits-${side}"></g>
-        </g>
-      </g>`;
-    }
-    return `
-    <svg class="pip-h" viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg">
-      <ellipse class="shadow" cx="120" cy="292" rx="92" ry="10"/>
-      <g class="h-char">
-        ${hand("l", 74, t.armL)}
-        ${hand("r", 166, t.armR)}
-      </g>
-    </svg>`;
+  // ---------- HANDS CLOSE-UP (two REALISTIC 3D hands; rendered by hands3d.js via WebGL) ----------
+  // PipStage detects rig:"hands", sizes this canvas, and hands it to window.Hands3D.
+  window.buildPipHands = function () {
+    return `<canvas class="pip-h pip3d-canvas" width="300" height="300"></canvas>`;
   };
 })();

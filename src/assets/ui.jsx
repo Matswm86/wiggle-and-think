@@ -15,12 +15,25 @@ function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure }) {
   React.useEffect(() => {
     const el = ref.current; if (!el) return;
     const spd = speed || 1;
-    // realistic hands rig → JS forward-kinematics animator
-    if (ex.rig === "hands" && window.HandsAnim) {
-      const svg = el.querySelector("svg");
-      const ctrl = window.HandsAnim.mount(svg, ex.id, { speed: spd, pausedAt, frozen });
-      if (onMeasure) onMeasure((window.HandsAnim.DURATION[ex.id] || 3.4) / spd);
-      return () => ctrl.stop();
+    // realistic 3D hands rig → WebGL (hands3d.js). Live only on the main player
+    // stage; cards & step thumbnails render a single static pose (one shared GL ctx).
+    if (ex.rig === "hands") {
+      let ctrl = null, canceled = false;
+      const start = () => {
+        if (canceled || !window.Hands3D) return;
+        const canvas = el.querySelector("canvas"); if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(64, Math.round((rect.width || 300) * dpr));
+        canvas.height = Math.max(64, Math.round((rect.height || 300) * dpr));
+        const isMain = (className || "").includes("pstage");
+        const pAt = pausedAt != null ? pausedAt : (isMain && !frozen ? null : 0.28);
+        ctrl = window.Hands3D.mount(canvas, ex.id, { speed: spd, pausedAt: pAt, frozen });
+        if (onMeasure) onMeasure((window.Hands3D.DURATION[ex.id] || 3.4) / spd);
+      };
+      if (window.Hands3D) start();
+      else window.addEventListener("hands3d-ready", start, { once: true });
+      return () => { canceled = true; window.removeEventListener("hands3d-ready", start); if (ctrl) ctrl.stop(); };
     }
     // CSS-driven rigs (biped / quad)
     let dur = 0;
