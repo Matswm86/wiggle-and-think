@@ -1,0 +1,79 @@
+/* ============================================================
+   PIP — character rig base styles
+   Two rigs: .pip (biped, front) and .pip-q (quadruped, side)
+   Pivots use transform-box: view-box so transform-origin is in
+   SVG user units. Nested groups compose into a real skeleton.
+   ============================================================ */
+
+.pip, .pip-q { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* every articulated group rotates in view-box coordinates */
+.pip [class],
+.pip-q [class] { transform-box: view-box; }
+
+.pip .shadow, .pip-q .shadow {
+  fill: rgba(33, 50, 58, 0.16);
+}
+/* dynamic ground shadow pivots at the contact point (jump moves animate it) */
+.pip .shadow { transform-origin: 120px 320px; }
+
+/* ---- eyes blink (life); runs on its own clock, excluded from move timing ---- */
+.pip .eyes { transform-origin: 120px 86px; animation: pipBlink 5.4s ease-in-out infinite; }
+@keyframes pipBlink {
+  0%, 93%, 100% { transform: scaleY(1); }
+  96%           { transform: scaleY(0.08); }
+  98%           { transform: scaleY(1); }
+}
+/* breathing belly balloon (only the breathe move animates it) */
+.pip .belly { transform-origin: 120px 198px; }
+.ex-breathe .belly { animation: pipBelly 7s ease-in-out infinite; }
+@keyframes pipBelly { 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.15); } }
+
+/* keep breakdown filmstrip thumbnails perfectly still */
+.bd-fig .eyes, .bd-fig .shadow, .bd-fig .belly { animation: none !important; }
+
+/* ---- limb / part pivots (biped) ---- */
+.pip .arm-l  { transform-origin: 74px 152px; }   /* left shoulder  */
+.pip .arm-r  { transform-origin: 166px 152px; }  /* right shoulder */
+.pip .fore-l { transform-origin: 74px 200px; }   /* left elbow     */
+.pip .fore-r { transform-origin: 166px 200px; }  /* right elbow    */
+.pip .leg-l  { transform-origin: 104px 246px; }  /* left hip       */
+.pip .leg-r  { transform-origin: 136px 246px; }  /* right hip      */
+.pip .shin-l { transform-origin: 104px 280px; }  /* left knee      */
+.pip .shin-r { transform-origin: 136px 280px; }  /* right knee     */
+.pip .head   { transform-origin: 120px 124px; }  /* neck           */
+.pip .upper  { transform-origin: 120px 238px; }  /* waist          */
+.pip .char   { transform-origin: 120px 316px; }  /* between feet   */
+
+/* gentle resting bend so elbows & knees always read as joints
+   (exercise keyframes override these where the joint actively moves) */
+.pip .fore-l { transform: rotate(9deg); }
+.pip .fore-r { transform: rotate(-9deg); }
+.pip .shin-l { transform: rotate(-3deg); }
+.pip .shin-r { transform: rotate(3deg); }
+
+/* slight gentle idle so a paused character still feels alive */
+.pip .char { animation: pipIdle 3.4s ease-in-out infinite; }
+@keyframes pipIdle {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-4px); }
+}
+/* exercises override .char animation, so idle only shows at rest */
+
+/* ---- quadruped pivots ---- */
+.pip-q .q-arm-n { transform-origin: 158px 196px; } /* near front shoulder */
+.pip-q .q-arm-f { transform-origin: 150px 196px; } /* far front shoulder  */
+.pip-q .q-leg-n { transform-origin: 92px 196px; }  /* near hip            */
+.pip-q .q-leg-f { transform-origin: 84px 196px; }  /* far hip             */
+.pip-q .q-head  { transform-origin: 176px 164px; }
+.pip-q .q-body  { transform-origin: 120px 186px; }
+.pip-q .q-char  { transform-origin: 120px 306px; }
+
+/* ---- hands close-up: realistic hands (fingers drawn by hands-anim.js) ---- */
+.pip-h [class] { transform-box: view-box; }
+.pip-h .shadow { fill: rgba(33,50,58,.16); }
+.pip-h .h-l, .pip-h .h-r { will-change: transform; }
+.pip-h line { stroke-linecap: round; }
+
+/* smooth motion everywhere */
+.pip g, .pip-q g { will-change: transform; }

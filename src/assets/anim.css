@@ -1,0 +1,395 @@
+/* ============================================================
+   anim.css — FULL multi-phase exercise movements.
+   Each move walks through its real keyframes and loops cleanly.
+   Per exercise, EVERY animated part shares one duration so the
+   pose-breakdown filmstrip (paused at %) lines up.
+   Sign notes (empirical):
+     arm-l: negative = raise toward overhead/centre; positive = swing out-down
+     arm-r: positive = raise toward overhead/centre
+     leg-l: positive = knee up toward centre;  leg-r: positive = knee up toward centre
+     shin : bends the knee; fore: bends the elbow
+   ============================================================ */
+
+/* ====================== BIPED ====================== */
+
+/* ---------- 18 Jumping Jacks (1.4s) ---------- */
+.ex-jacks .char  { animation: jjBody 1.4s ease-in-out infinite; }
+.ex-jacks .arm-l { animation: jjArmL 1.4s ease-in-out infinite; }
+.ex-jacks .arm-r { animation: jjArmR 1.4s ease-in-out infinite; }
+.ex-jacks .fore-l{ animation: jjForeL 1.4s ease-in-out infinite; }
+.ex-jacks .fore-r{ animation: jjForeR 1.4s ease-in-out infinite; }
+.ex-jacks .leg-l { animation: jjLegL 1.4s ease-in-out infinite; }
+.ex-jacks .leg-r { animation: jjLegR 1.4s ease-in-out infinite; }
+.ex-jacks .shin-l{ animation: jjShinL 1.4s ease-in-out infinite; }
+.ex-jacks .shin-r{ animation: jjShinR 1.4s ease-in-out infinite; }
+@keyframes jjBody { 0%,50%,100%{transform:translateY(0)} 25%,75%{transform:translateY(-22px)} }
+@keyframes jjArmL { 0%,100%{transform:rotate(7deg)} 50%{transform:rotate(-152deg)} }
+@keyframes jjArmR { 0%,100%{transform:rotate(-7deg)} 50%{transform:rotate(152deg)} }
+@keyframes jjForeL{ 0%,100%{transform:rotate(10deg)} 50%{transform:rotate(-6deg)} }
+@keyframes jjForeR{ 0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(6deg)} }
+@keyframes jjLegL { 0%,100%{transform:rotate(2deg)} 50%{transform:rotate(-19deg)} }
+@keyframes jjLegR { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(19deg)} }
+@keyframes jjShinL{ 0%,100%{transform:rotate(-13deg)} 50%{transform:rotate(-2deg)} }
+@keyframes jjShinR{ 0%,100%{transform:rotate(13deg)} 50%{transform:rotate(2deg)} }
+
+/* ---------- 5 Cross-Crawl March (2.8s) — opposite hand taps lifted knee ---------- */
+.ex-march .char  { animation: mBody 2.8s ease-in-out infinite; }
+.ex-march .head  { animation: mHead 2.8s ease-in-out infinite; }
+.ex-march .leg-r { animation: mLegR 2.8s ease-in-out infinite; }
+.ex-march .shin-r{ animation: mShinR 2.8s ease-in-out infinite; }
+.ex-march .leg-l { animation: mLegL 2.8s ease-in-out infinite; }
+.ex-march .shin-l{ animation: mShinL 2.8s ease-in-out infinite; }
+.ex-march .arm-l { animation: mArmL 2.8s ease-in-out infinite; }
+.ex-march .fore-l{ animation: mForeL 2.8s ease-in-out infinite; }
+.ex-march .arm-r { animation: mArmR 2.8s ease-in-out infinite; }
+.ex-march .fore-r{ animation: mForeR 2.8s ease-in-out infinite; }
+@keyframes mBody { 0%,50%,100%{transform:translateY(0)} 22%,72%{transform:translateY(-5px)} }
+@keyframes mHead { 0%,100%{transform:rotate(0)} 22%{transform:rotate(4deg)} 72%{transform:rotate(-4deg)} }
+/* right knee up & toward centre at 22% */
+@keyframes mLegR { 0%,45%,100%{transform:rotate(-2deg)} 22%{transform:rotate(64deg)} }
+@keyframes mShinR{ 0%,45%,100%{transform:rotate(3deg)} 22%{transform:rotate(-58deg)} }
+/* left knee up at 72% */
+@keyframes mLegL { 0%,50%,95%,100%{transform:rotate(2deg)} 72%{transform:rotate(-64deg)} }
+@keyframes mShinL{ 0%,50%,95%,100%{transform:rotate(-3deg)} 72%{transform:rotate(58deg)} }
+/* left hand crosses down to TAP the right knee at 22% (straight arm reaches it) */
+@keyframes mArmL { 0%,50%,100%{transform:rotate(8deg)} 22%{transform:rotate(-16deg)} }
+@keyframes mForeL{ 0%,50%,100%{transform:rotate(9deg)} 22%{transform:rotate(-2deg)} }
+/* right hand taps the left knee at 72% */
+@keyframes mArmR { 0%,48%,100%{transform:rotate(-8deg)} 72%{transform:rotate(16deg)} }
+@keyframes mForeR{ 0%,48%,100%{transform:rotate(-9deg)} 72%{transform:rotate(2deg)} }
+
+/* ---------- 6 Windmill Toe-Touch (3.2s) — hand to opposite foot ---------- */
+.ex-windmill .leg-l { transform: rotate(-20deg); }
+.ex-windmill .leg-r { transform: rotate(20deg); }
+.ex-windmill .upper { animation: wmUpper 3.2s ease-in-out infinite; }
+.ex-windmill .head  { animation: wmHead 3.2s ease-in-out infinite; }
+.ex-windmill .arm-l { animation: wmArmL 3.2s ease-in-out infinite; }
+.ex-windmill .fore-l{ animation: wmForeL 3.2s ease-in-out infinite; }
+.ex-windmill .arm-r { animation: wmArmR 3.2s ease-in-out infinite; }
+.ex-windmill .fore-r{ animation: wmForeR 3.2s ease-in-out infinite; }
+@keyframes wmUpper{ 0%,50%,100%{transform:rotate(0)} 25%{transform:rotate(-9deg)} 75%{transform:rotate(9deg)} }
+@keyframes wmHead { 0%,50%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+/* T at 0/50/100; 25% right hand down to LEFT foot (left arm up); 75% left hand to RIGHT foot */
+@keyframes wmArmL { 0%,50%,100%{transform:rotate(-92deg)} 25%{transform:rotate(-150deg)} 75%{transform:rotate(-28deg)} }
+@keyframes wmArmR { 0%,50%,100%{transform:rotate(92deg)} 25%{transform:rotate(28deg)} 75%{transform:rotate(150deg)} }
+@keyframes wmForeL{ 0%,50%,100%{transform:rotate(8deg)} 75%{transform:rotate(2deg)} }
+@keyframes wmForeR{ 0%,50%,100%{transform:rotate(-8deg)} 25%{transform:rotate(-2deg)} }
+
+/* ---------- 7 Lazy-8 Air Tracing (3.6s) ---------- */
+.ex-lazy8 .arm-r { animation: l8Arm 3.6s ease-in-out infinite; }
+.ex-lazy8 .fore-r{ animation: l8Fore 3.6s ease-in-out infinite; }
+.ex-lazy8 .arm-l { transform: rotate(14deg); }
+.ex-lazy8 .head  { animation: l8Head 3.6s ease-in-out infinite; }
+@keyframes l8Arm {
+  0%,100%{transform:rotate(-92deg)}
+  25%{transform:rotate(-118deg)} 50%{transform:rotate(-92deg)} 75%{transform:rotate(-66deg)}
+}
+@keyframes l8Fore{
+  0%,50%,100%{transform:rotate(0deg)}
+  25%{transform:rotate(-22deg)} 75%{transform:rotate(22deg)}
+}
+@keyframes l8Head { 0%,100%{transform:rotate(6deg)} 50%{transform:rotate(-6deg)} }
+
+/* ---------- 8 Tree Pose (6s) — enter, hold, release ---------- */
+.ex-tree .char  { animation: tSway 6s ease-in-out infinite; }
+.ex-tree .arm-l { animation: tArmL 6s ease-in-out infinite; }
+.ex-tree .arm-r { animation: tArmR 6s ease-in-out infinite; }
+.ex-tree .leg-r { animation: tLegR 6s ease-in-out infinite; }
+.ex-tree .shin-r{ animation: tShinR 6s ease-in-out infinite; }
+@keyframes tSway  { 0%,100%{transform:translateY(0) rotate(0)} 45%,70%{transform:translateY(-2px) rotate(1.5deg)} 57%{transform:translateY(-2px) rotate(-1.5deg)} }
+@keyframes tArmL  { 0%,12%,100%{transform:rotate(8deg)} 35%,80%{transform:rotate(-150deg)} }
+@keyframes tArmR  { 0%,12%,100%{transform:rotate(-8deg)} 35%,80%{transform:rotate(150deg)} }
+@keyframes tLegR  { 0%,8%,95%,100%{transform:rotate(-2deg)} 28%,82%{transform:rotate(40deg)} }
+@keyframes tShinR { 0%,8%,95%,100%{transform:rotate(3deg)} 28%,82%{transform:rotate(74deg)} }
+
+/* ---------- 9 Airplane Pose (5.5s) — tip forward, lift leg, hold ---------- */
+.ex-airplane .char  { animation: apSway 5.5s ease-in-out infinite; }
+.ex-airplane .upper { animation: apUpper 5.5s ease-in-out infinite; }
+.ex-airplane .arm-l { animation: apArmL 5.5s ease-in-out infinite; }
+.ex-airplane .arm-r { animation: apArmR 5.5s ease-in-out infinite; }
+.ex-airplane .fore-l{ transform: rotate(2deg); }
+.ex-airplane .fore-r{ transform: rotate(-2deg); }
+.ex-airplane .leg-r { animation: apLegR 5.5s ease-in-out infinite; }
+.ex-airplane .shin-r{ transform: rotate(2deg); }
+@keyframes apSway { 0%,12%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-1px) rotate(1deg)} 65%{transform:rotate(-1deg)} }
+@keyframes apUpper{ 0%,12%,95%,100%{transform:rotate(0)} 40%,80%{transform:rotate(-16deg)} }
+@keyframes apArmL { 0%,12%,95%,100%{transform:rotate(8deg)} 40%,80%{transform:rotate(-96deg)} }
+@keyframes apArmR { 0%,12%,95%,100%{transform:rotate(-8deg)} 40%,80%{transform:rotate(96deg)} }
+@keyframes apLegR { 0%,12%,95%,100%{transform:rotate(-2deg)} 40%,80%{transform:rotate(-52deg)} }
+
+/* ---------- 12 Freeze Dance (0.6s loop; freeze handled by .frozen) ---------- */
+.ex-freeze .char  { animation: fdBody .6s ease-in-out infinite; }
+.ex-freeze .arm-l { animation: fdArmL .6s ease-in-out infinite; }
+.ex-freeze .arm-r { animation: fdArmR .6s ease-in-out infinite; }
+.ex-freeze .fore-l{ animation: fdForeL .6s ease-in-out infinite; }
+.ex-freeze .fore-r{ animation: fdForeR .6s ease-in-out infinite; }
+.ex-freeze .head  { animation: fdHead .6s ease-in-out infinite; }
+.ex-freeze .leg-l { animation: fdLegL .6s ease-in-out infinite; }
+.ex-freeze .leg-r { animation: fdLegR .6s ease-in-out infinite; }
+@keyframes fdBody { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-10px) rotate(3deg)} }
+@keyframes fdArmL { 0%{transform:rotate(-130deg)} 50%{transform:rotate(40deg)} 100%{transform:rotate(-130deg)} }
+@keyframes fdArmR { 0%{transform:rotate(40deg)} 50%{transform:rotate(-130deg)} 100%{transform:rotate(40deg)} }
+@keyframes fdForeL{ 0%{transform:rotate(-20deg)} 50%{transform:rotate(20deg)} 100%{transform:rotate(-20deg)} }
+@keyframes fdForeR{ 0%{transform:rotate(20deg)} 50%{transform:rotate(-20deg)} 100%{transform:rotate(20deg)} }
+@keyframes fdHead { 0%,100%{transform:rotate(6deg)} 50%{transform:rotate(-6deg)} }
+@keyframes fdLegL { 0%,100%{transform:rotate(6deg)} 50%{transform:rotate(-4deg)} }
+@keyframes fdLegR { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(6deg)} }
+
+/* ---------- 13 Simon Says (4.4s) — listen, do, then a trick (don't move) ---------- */
+.ex-simon .head  { animation: ssHead 4.4s ease-in-out infinite; }
+.ex-simon .arm-r { animation: ssArmR 4.4s ease-in-out infinite; }
+.ex-simon .fore-r{ animation: ssForeR 4.4s ease-in-out infinite; }
+.ex-simon .leg-l { animation: ssLegL 4.4s ease-in-out infinite; }
+.ex-simon .shin-l{ animation: ssShinL 4.4s ease-in-out infinite; }
+.ex-simon .arm-l { transform: rotate(10deg); }
+/* phase: 0 listen (still), 40 do the move (right hand taps left knee), 85 trick → shake head, stay still */
+@keyframes ssHead { 0%,30%{transform:rotate(0)} 12%{transform:rotate(-5deg)} 70%{transform:rotate(0)} 80%{transform:rotate(-9deg)} 90%{transform:rotate(9deg)} 100%{transform:rotate(0)} }
+@keyframes ssArmR { 0%,12%,60%,100%{transform:rotate(-8deg)} 35%,48%{transform:rotate(16deg)} }
+@keyframes ssForeR{ 0%,12%,60%,100%{transform:rotate(-9deg)} 35%,48%{transform:rotate(2deg)} }
+@keyframes ssLegL { 0%,12%,60%,100%{transform:rotate(2deg)} 35%,48%{transform:rotate(-58deg)} }
+@keyframes ssShinL{ 0%,12%,60%,100%{transform:rotate(-3deg)} 35%,48%{transform:rotate(52deg)} }
+
+/* ---------- 14 Clap & Echo (2.4s) — clap-clap-clap, then echo ---------- */
+.ex-clap .arm-l { animation: clArmL 2.4s ease-in-out infinite; }
+.ex-clap .arm-r { animation: clArmR 2.4s ease-in-out infinite; }
+.ex-clap .fore-l{ transform: rotate(-26deg); }
+.ex-clap .fore-r{ transform: rotate(26deg); }
+.ex-clap .char  { animation: clBob 2.4s ease-in-out infinite; }
+@keyframes clBob { 0%,100%{transform:translateY(0)} 10%,25%,40%,60%,75%,90%{transform:translateY(-4px)} }
+/* hands apart (-55/55) ... clap (-84/84) in two groups */
+@keyframes clArmL {
+  0%,50%,100%{transform:rotate(-55deg)}
+  10%,25%,40%{transform:rotate(-84deg)} 17%,32%{transform:rotate(-55deg)}
+  60%,75%,90%{transform:rotate(-84deg)} 67%,82%{transform:rotate(-55deg)}
+}
+@keyframes clArmR {
+  0%,50%,100%{transform:rotate(55deg)}
+  10%,25%,40%{transform:rotate(84deg)} 17%,32%{transform:rotate(55deg)}
+  60%,75%,90%{transform:rotate(84deg)} 67%,82%{transform:rotate(55deg)}
+}
+
+/* ---------- 15 Body Drum (2.4s) — STOMP, STOMP, CLAP, PAT ---------- */
+.ex-drum .char  { animation: bdBob 2.4s ease-in-out infinite; }
+.ex-drum .leg-r { animation: bdStompR 2.4s ease-in-out infinite; }
+.ex-drum .shin-r{ animation: bdShinR 2.4s ease-in-out infinite; }
+.ex-drum .arm-l { animation: bdArmL 2.4s ease-in-out infinite; }
+.ex-drum .arm-r { animation: bdArmR 2.4s ease-in-out infinite; }
+.ex-drum .fore-l{ animation: bdForeL 2.4s ease-in-out infinite; }
+.ex-drum .fore-r{ animation: bdForeR 2.4s ease-in-out infinite; }
+@keyframes bdBob   { 0%,100%{transform:translateY(0)} 12%,37%{transform:translateY(-3px)} }
+/* two stomps (0-25 & 25-50), clap (50-75), pat thighs (75-100) */
+@keyframes bdStompR{ 0%{transform:rotate(-30deg)} 12%{transform:rotate(0)} 25%{transform:rotate(-30deg)} 37%,100%{transform:rotate(0)} }
+@keyframes bdShinR { 0%{transform:rotate(34deg)} 12%{transform:rotate(3deg)} 25%{transform:rotate(34deg)} 37%,100%{transform:rotate(3deg)} }
+@keyframes bdArmL  { 0%,45%{transform:rotate(-50deg)} 62%{transform:rotate(-84deg)} 80%,100%{transform:rotate(-18deg)} }
+@keyframes bdArmR  { 0%,45%{transform:rotate(50deg)} 62%{transform:rotate(84deg)} 80%,100%{transform:rotate(18deg)} }
+@keyframes bdForeL { 0%,45%{transform:rotate(-20deg)} 62%{transform:rotate(-26deg)} 80%,100%{transform:rotate(40deg)} }
+@keyframes bdForeR { 0%,45%{transform:rotate(20deg)} 62%{transform:rotate(26deg)} 80%,100%{transform:rotate(-40deg)} }
+
+/* ---------- 16 Kangaroo Jumps (1.8s) — squat, jump high, land soft ---------- */
+.ex-kanga .char  { animation: kBody 1.8s cubic-bezier(.45,0,.5,1) infinite; }
+.ex-kanga .arm-l { transform: rotate(60deg); }
+.ex-kanga .arm-r { transform: rotate(-60deg); }
+.ex-kanga .fore-l{ transform: rotate(58deg); }
+.ex-kanga .fore-r{ transform: rotate(-58deg); }
+.ex-kanga .leg-l { animation: kLegL 1.8s ease-in-out infinite; }
+.ex-kanga .leg-r { animation: kLegR 1.8s ease-in-out infinite; }
+.ex-kanga .shin-l{ animation: kShinL 1.8s ease-in-out infinite; }
+.ex-kanga .shin-r{ animation: kShinR 1.8s ease-in-out infinite; }
+@keyframes kBody {
+  0%{transform:translateY(0) scaleY(1)} 14%{transform:translateY(14px) scaleY(.82)}
+  42%{transform:translateY(-78px) scaleY(1.07)} 70%{transform:translateY(16px) scaleY(.8)}
+  85%{transform:translateY(0) scaleY(1.03)} 100%{transform:translateY(0) scaleY(1)}
+}
+@keyframes kLegL { 0%,85%,100%{transform:rotate(2deg)} 42%{transform:rotate(8deg)} }
+@keyframes kLegR { 0%,85%,100%{transform:rotate(-2deg)} 42%{transform:rotate(-8deg)} }
+@keyframes kShinL{ 0%,100%{transform:rotate(-3deg)} 14%,70%{transform:rotate(-26deg)} 42%{transform:rotate(0)} }
+@keyframes kShinR{ 0%,100%{transform:rotate(3deg)} 14%,70%{transform:rotate(26deg)} 42%{transform:rotate(0)} }
+
+/* ---------- 17 Star Jumps (1.8s) — squat, STAR, land ---------- */
+.ex-starjump .char  { animation: sjBody 1.8s cubic-bezier(.45,0,.5,1) infinite; }
+.ex-starjump .arm-l { animation: sjArmL 1.8s ease-in-out infinite; }
+.ex-starjump .arm-r { animation: sjArmR 1.8s ease-in-out infinite; }
+.ex-starjump .fore-l{ transform: rotate(6deg); }
+.ex-starjump .fore-r{ transform: rotate(-6deg); }
+.ex-starjump .leg-l { animation: sjLegL 1.8s ease-in-out infinite; }
+.ex-starjump .leg-r { animation: sjLegR 1.8s ease-in-out infinite; }
+.ex-starjump .shin-l{ animation: sjShinL 1.8s ease-in-out infinite; }
+.ex-starjump .shin-r{ animation: sjShinR 1.8s ease-in-out infinite; }
+@keyframes sjBody {
+  0%{transform:translateY(0) scaleY(1)} 14%{transform:translateY(14px) scaleY(.82)}
+  45%{transform:translateY(-70px) scaleY(1.05)} 72%{transform:translateY(14px) scaleY(.82)}
+  88%{transform:translateY(0) scaleY(1.02)} 100%{transform:translateY(0) scaleY(1)}
+}
+@keyframes sjArmL { 0%,14%,100%{transform:rotate(8deg)} 45%{transform:rotate(-150deg)} 72%{transform:rotate(8deg)} }
+@keyframes sjArmR { 0%,14%,100%{transform:rotate(-8deg)} 45%{transform:rotate(150deg)} 72%{transform:rotate(-8deg)} }
+@keyframes sjLegL { 0%,14%,100%{transform:rotate(2deg)} 45%{transform:rotate(-30deg)} 72%{transform:rotate(2deg)} }
+@keyframes sjLegR { 0%,14%,100%{transform:rotate(-2deg)} 45%{transform:rotate(30deg)} 72%{transform:rotate(-2deg)} }
+@keyframes sjShinL{ 0%,100%{transform:rotate(-3deg)} 14%,72%{transform:rotate(-24deg)} 45%{transform:rotate(-2deg)} }
+@keyframes sjShinR{ 0%,100%{transform:rotate(3deg)} 14%,72%{transform:rotate(24deg)} 45%{transform:rotate(2deg)} }
+
+/* ---------- 4 Flamingo Hop (1.5s) ---------- */
+.ex-flamingo .char  { animation: flHop 1.5s cubic-bezier(.45,0,.5,1) infinite; }
+.ex-flamingo .arm-l { animation: flWingL 1.5s ease-in-out infinite; }
+.ex-flamingo .arm-r { animation: flWingR 1.5s ease-in-out infinite; }
+.ex-flamingo .leg-r { transform: rotate(54deg); }
+.ex-flamingo .shin-r{ transform: rotate(-46deg); }
+.ex-flamingo .shin-l{ animation: flShinL 1.5s ease-in-out infinite; }
+@keyframes flHop  { 0%{transform:translateY(0)} 42%{transform:translateY(-40px)} 70%{transform:translateY(6px) scaleY(.92)} 100%{transform:translateY(0)} }
+@keyframes flWingL{ 0%,100%{transform:rotate(-86deg)} 42%{transform:rotate(-108deg)} }
+@keyframes flWingR{ 0%,100%{transform:rotate(86deg)} 42%{transform:rotate(108deg)} }
+@keyframes flShinL{ 0%,100%{transform:rotate(-3deg)} 70%{transform:rotate(-22deg)} 42%{transform:rotate(0)} }
+
+/* ---------- 19 Tightrope Walk (3.4s) — heel-to-toe steps, arms out ---------- */
+.ex-tightrope .arm-l { transform: rotate(-92deg); animation: trWobbleL 3.4s ease-in-out infinite; }
+.ex-tightrope .arm-r { transform: rotate(92deg); animation: trWobbleR 3.4s ease-in-out infinite; }
+.ex-tightrope .fore-l{ transform: rotate(2deg); }
+.ex-tightrope .fore-r{ transform: rotate(-2deg); }
+.ex-tightrope .upper { animation: trUpper 3.4s ease-in-out infinite; }
+.ex-tightrope .char  { animation: trBob 3.4s ease-in-out infinite; }
+.ex-tightrope .leg-l { animation: trLegL 3.4s ease-in-out infinite; }
+.ex-tightrope .shin-l{ animation: trShinL 3.4s ease-in-out infinite; }
+.ex-tightrope .leg-r { animation: trLegR 3.4s ease-in-out infinite; }
+.ex-tightrope .shin-r{ animation: trShinR 3.4s ease-in-out infinite; }
+@keyframes trUpper { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+@keyframes trBob   { 0%,100%{transform:translateY(0)} 25%,75%{transform:translateY(-4px)} }
+@keyframes trWobbleL{ 0%,100%{transform:rotate(-88deg)} 50%{transform:rotate(-96deg)} }
+@keyframes trWobbleR{ 0%,100%{transform:rotate(96deg)} 50%{transform:rotate(88deg)} }
+/* one foot steps forward (lifts, swings, plants) then the other */
+@keyframes trLegL { 0%,100%{transform:rotate(2deg)} 25%{transform:rotate(-22deg)} 45%{transform:rotate(2deg)} }
+@keyframes trShinL{ 0%,100%{transform:rotate(-3deg)} 25%{transform:rotate(-22deg)} 45%{transform:rotate(-3deg)} }
+@keyframes trLegR { 0%,50%,100%{transform:rotate(-2deg)} 75%{transform:rotate(22deg)} 95%{transform:rotate(-2deg)} }
+@keyframes trShinR{ 0%,50%,100%{transform:rotate(3deg)} 75%{transform:rotate(22deg)} 95%{transform:rotate(3deg)} }
+
+/* ---------- 20 Starfish / Rainbow Breathing (7s) ---------- */
+.ex-breathe .char  { animation: brBody 7s ease-in-out infinite; }
+.ex-breathe .arm-l { animation: brArmL 7s ease-in-out infinite; }
+.ex-breathe .arm-r { animation: brArmR 7s ease-in-out infinite; }
+.ex-breathe .fore-l{ animation: brForeL 7s ease-in-out infinite; }
+.ex-breathe .fore-r{ animation: brForeR 7s ease-in-out infinite; }
+@keyframes brBody { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-7px) scale(1.05)} }
+@keyframes brArmL { 0%,100%{transform:rotate(12deg)} 50%{transform:rotate(-152deg)} }
+@keyframes brArmR { 0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(152deg)} }
+@keyframes brForeL{ 0%,100%{transform:rotate(9deg)} 50%{transform:rotate(-4deg)} }
+@keyframes brForeR{ 0%,100%{transform:rotate(-9deg)} 50%{transform:rotate(4deg)} }
+
+/* ====================== QUADRUPED ====================== */
+
+/* ---------- 1 Bear Crawl (2.6s) — same-side limbs step, body shifts ---------- */
+.ex-bear .q-char  { animation: bearBob 2.6s ease-in-out infinite; }
+.ex-bear .q-arm-n { animation: bearStepF 2.6s ease-in-out infinite; }
+.ex-bear .q-leg-n { animation: bearStepF 2.6s ease-in-out infinite; }
+.ex-bear .q-arm-f { animation: bearStepB 2.6s ease-in-out infinite; }
+.ex-bear .q-leg-f { animation: bearStepB 2.6s ease-in-out infinite; }
+@keyframes bearBob   { 0%,100%{transform:translateY(0)} 25%,75%{transform:translateY(-5px)} }
+@keyframes bearStepF { 0%,100%{transform:rotate(0)} 12%{transform:rotate(-30deg)} 25%{transform:rotate(0)} }
+@keyframes bearStepB { 0%,50%{transform:rotate(0)} 62%{transform:rotate(-30deg)} 75%{transform:rotate(0)} }
+
+/* ---------- 2 Crab Walk (2.4s) — scoot one way, then the other ---------- */
+.ex-crab .c-char { animation: crabBob 2.4s ease-in-out infinite; }
+.ex-crab .c-arm  { animation: crabArm 2.4s ease-in-out infinite; }
+.ex-crab .c-leg  { animation: crabLeg 2.4s ease-in-out infinite; }
+@keyframes crabBob { 0%,100%{transform:translateX(0) translateY(0)} 25%{transform:translateX(14px) translateY(-3px)} 50%{transform:translateX(0)} 75%{transform:translateX(-14px) translateY(-3px)} }
+@keyframes crabArm { 0%,50%,100%{transform:rotate(0)} 25%{transform:rotate(16deg)} 75%{transform:rotate(-10deg)} }
+@keyframes crabLeg { 0%,50%,100%{transform:rotate(0)} 25%{transform:rotate(10deg)} 75%{transform:rotate(-16deg)} }
+
+/* ---------- 3 Inchworm (3.4s) — fold, hands out to plank, feet walk up ---------- */
+.ex-inch .q-body  { animation: iwBody 3.4s ease-in-out infinite; }
+.ex-inch .q-arm-n { animation: iwArm 3.4s ease-in-out infinite; }
+.ex-inch .q-arm-f { animation: iwArm 3.4s ease-in-out infinite; }
+.ex-inch .q-leg-n { animation: iwLeg 3.4s ease-in-out infinite; }
+.ex-inch .q-leg-f { animation: iwLeg 3.4s ease-in-out infinite; }
+@keyframes iwBody {
+  0%,100%{transform:scaleX(.8) translateY(-8px)}   /* bunched, hips up */
+  45%{transform:scaleX(1.08) translateY(2px)}       /* long plank */
+}
+@keyframes iwArm { 0%,100%{transform:rotate(0)} 30%{transform:rotate(-18deg)} 45%{transform:rotate(0)} }   /* hands walk out */
+@keyframes iwLeg { 0%,55%{transform:rotate(0)} 78%{transform:rotate(18deg)} 100%{transform:rotate(0)} }    /* feet walk up */
+
+/* ---------- 10 Cat-Cow (4s) — cow (look up) / cat (round up) ---------- */
+.ex-catcow .q-body { animation: ccBody 4s ease-in-out infinite; }
+.ex-catcow .q-head { animation: ccHead 4s ease-in-out infinite; }
+.ex-catcow .q-tail { animation: ccTail 4s ease-in-out infinite; transform-origin: 52px 186px; }
+@keyframes ccBody {
+  0%,100%{transform:translateY(6px) scaleY(1.05)}   /* cow: belly drops */
+  50%{transform:translateY(-9px) scaleY(.88)}        /* cat: rounds up */
+}
+@keyframes ccHead { 0%,100%{transform:rotate(-15deg)} 50%{transform:rotate(22deg)} }
+@keyframes ccTail { 0%,100%{transform:rotate(-14deg)} 50%{transform:rotate(18deg)} }
+
+/* ---------- 11 Downward Dog (5s) — hands&knees, hips up to V, wag ---------- */
+.ex-dog .q-body { animation: ddBody 5s ease-in-out infinite; }
+.ex-dog .q-head { animation: ddHead 5s ease-in-out infinite; }
+.ex-dog .q-tail { animation: ddTail 1.4s ease-in-out infinite; transform-origin: 52px 186px; }
+.ex-dog .q-arm-n, .ex-dog .q-arm-f { animation: ddArm 5s ease-in-out infinite; }
+.ex-dog .q-leg-n, .ex-dog .q-leg-f { animation: ddLeg 5s ease-in-out infinite; }
+@keyframes ddBody{ 0%,15%,95%,100%{transform:rotate(0) translateY(0)} 45%,80%{transform:rotate(-16deg) translateY(-4px)} }
+@keyframes ddHead{ 0%,15%,95%,100%{transform:rotate(0)} 45%,80%{transform:rotate(16deg)} }
+@keyframes ddArm { 0%,15%,95%,100%{transform:rotate(0)} 45%,80%{transform:rotate(10deg)} }
+@keyframes ddLeg { 0%,15%,95%,100%{transform:rotate(0)} 45%,80%{transform:rotate(-14deg)} }
+@keyframes ddTail{ 0%,100%{transform:rotate(-18deg)} 50%{transform:rotate(10deg)} }
+
+/* frozen state (freeze dance) — pause everything */
+.frozen .char, .frozen .arm-l, .frozen .arm-r, .frozen .fore-l, .frozen .fore-r,
+.frozen .leg-l, .frozen .leg-r, .frozen .head { animation-play-state: paused !important; }
+
+/* ====================== CLEVER HANDS ====================== */
+/* Moves 1–5 (fingertips, openclose, twirls, tappairs, thumbsinout) use the
+   realistic hands rig — their finger motion is drawn by hands-anim.js (JS
+   forward-kinematics), so they need no CSS keyframes here.
+   Moves 6–8 (fistflat, magicnumbers, noseear) use the biped rig: */
+
+/* ---------- 28 Nose & Ear Switch — biped (3.6s) ---------- */
+/* one hand UP & OVER the head to the OPPOSITE ear, other hand to the nose · swap.
+   arm-r +ve = up/over toward the left; arm-l -ve = up/over toward the right. */
+.ex-noseear .arm-r { animation: neArmR 3.6s ease-in-out infinite; }
+.ex-noseear .fore-r{ animation: neForeR 3.6s ease-in-out infinite; }
+.ex-noseear .arm-l { animation: neArmL 3.6s ease-in-out infinite; }
+.ex-noseear .fore-l{ animation: neForeL 3.6s ease-in-out infinite; }
+.ex-noseear .head  { animation: neHead 3.6s ease-in-out infinite; }
+/* right hand: over head to LEFT ear at 0 → forward/clap at 25/75 → nose at 50 */
+@keyframes neArmR { 0%,100%{transform:rotate(162deg)} 25%,75%{transform:rotate(82deg)} 50%{transform:rotate(112deg)} }
+@keyframes neForeR{ 0%,100%{transform:rotate(26deg)} 25%,75%{transform:rotate(12deg)} 50%{transform:rotate(46deg)} }
+/* left hand: nose at 0 → forward/clap at 25/75 → over head to RIGHT ear at 50 */
+@keyframes neArmL { 0%,100%{transform:rotate(-112deg)} 25%,75%{transform:rotate(-82deg)} 50%{transform:rotate(-162deg)} }
+@keyframes neForeL{ 0%,100%{transform:rotate(-46deg)} 25%,75%{transform:rotate(-12deg)} 50%{transform:rotate(-26deg)} }
+@keyframes neHead { 0%,100%{transform:rotate(3deg)} 50%{transform:rotate(-3deg)} }
+
+/* ---------- 26 Fist & Flat Swap — biped (3.2s) ---------- */
+/* the arm out to the SIDE is a fist; the other hand is flat on the chest · swap */
+.ex-fistflat .arm-r { animation: ffArmR 3.2s ease-in-out infinite; }
+.ex-fistflat .fore-r{ animation: ffForeR 3.2s ease-in-out infinite; }
+.ex-fistflat .arm-l { animation: ffArmL 3.2s ease-in-out infinite; }
+.ex-fistflat .fore-l{ animation: ffForeL 3.2s ease-in-out infinite; }
+.ex-fistflat .char  { animation: ffBob 3.2s ease-in-out infinite; }
+@keyframes ffBob   { 0%,50%,100%{transform:translateY(0)} 25%,75%{transform:translateY(-3px)} }
+/* right out to side (−90) at 0 → flat on chest (+62) at 50 */
+@keyframes ffArmR  { 0%,100%{transform:rotate(-92deg)} 50%{transform:rotate(62deg)} }
+@keyframes ffForeR { 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(64deg)} }
+/* left flat on chest (−62) at 0 → out to side (+90) at 50 */
+@keyframes ffArmL  { 0%,100%{transform:rotate(-62deg)} 50%{transform:rotate(92deg)} }
+@keyframes ffForeL { 0%,100%{transform:rotate(-64deg)} 50%{transform:rotate(6deg)} }
+
+/* ---------- 27 Magic Numbers — biped (3.6s) ---------- */
+/* both arms out wide, pointer up, tracing a mirrored shape in the air */
+.ex-magicnumbers .arm-l { animation: mnArmL 3.6s ease-in-out infinite; }
+.ex-magicnumbers .fore-l{ animation: mnForeL 3.6s ease-in-out infinite; }
+.ex-magicnumbers .arm-r { animation: mnArmR 3.6s ease-in-out infinite; }
+.ex-magicnumbers .fore-r{ animation: mnForeR 3.6s ease-in-out infinite; }
+.ex-magicnumbers .head  { animation: mnHead 3.6s ease-in-out infinite; }
+@keyframes mnArmL { 0%,100%{transform:rotate(-118deg)} 25%{transform:rotate(-134deg)} 50%{transform:rotate(-118deg)} 75%{transform:rotate(-102deg)} }
+@keyframes mnForeL{ 0%,100%{transform:rotate(6deg)} 25%{transform:rotate(-16deg)} 50%{transform:rotate(6deg)} 75%{transform:rotate(24deg)} }
+@keyframes mnArmR { 0%,100%{transform:rotate(118deg)} 25%{transform:rotate(134deg)} 50%{transform:rotate(118deg)} 75%{transform:rotate(102deg)} }
+@keyframes mnForeR{ 0%,100%{transform:rotate(-6deg)} 25%{transform:rotate(16deg)} 50%{transform:rotate(-6deg)} 75%{transform:rotate(-24deg)} }
+@keyframes mnHead { 0%,100%{transform:rotate(0)} 50%{transform:rotate(2deg)} }
+
+/* ---------- dynamic ground shadow for airborne moves ----------
+   the shadow shrinks & fades as the character leaves the floor — a clear
+   "off the ground" cue. Timings mirror each jump's body keyframes. */
+.ex-kanga    .shadow { animation: shKanga 1.8s cubic-bezier(.45,0,.5,1) infinite; }
+.ex-starjump .shadow { animation: shStar  1.8s cubic-bezier(.45,0,.5,1) infinite; }
+.ex-jacks    .shadow { animation: shJacks 1.4s ease-in-out infinite; }
+.ex-flamingo .shadow { animation: shFlam  1.5s cubic-bezier(.45,0,.5,1) infinite; }
+@keyframes shKanga { 0%,100%{transform:scale(1);opacity:1} 42%{transform:scale(.48);opacity:.4} 70%{transform:scale(1.08);opacity:1} }
+@keyframes shStar  { 0%,100%{transform:scale(1);opacity:1} 45%{transform:scale(.55);opacity:.4} }
+@keyframes shJacks { 0%,50%,100%{transform:scale(1);opacity:1} 25%,75%{transform:scale(.72);opacity:.6} }
+@keyframes shFlam  { 0%,100%{transform:scale(1);opacity:1} 42%{transform:scale(.6);opacity:.45} }
