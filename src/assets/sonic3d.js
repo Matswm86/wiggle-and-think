@@ -24,6 +24,26 @@ const DURATION = {};
 let renderer = null, scene = null, camera = null, root = null, keyLight = null;
 let clipData = {}, clipDur = {};             // clipName -> {dur, binds:[{bone, interp}]}
 let ready = false; const readyCbs = []; let liveLoop = null;
+let frameCtr = null, frameDist = 0;          // stored from frameCamera, for per-move view angles
+
+// per-move camera angle (degrees): az = rotate around vertical, el = elevate.
+// Sagittal moves (knee-ups, arm swings, steps) collapse on a straight-front camera,
+// so they get a 3/4 view; frontal poses stay at the default front (0,0).
+const SONIC_VIEW = {
+  march: { az: 40 }, tightrope: { az: 42 }, flamingo: { az: 24, el: 6 },
+  airplane: { az: 22, el: 8 }, drum: { az: 36 }, kanga: { az: 18 },
+};
+function applyView(exId) {
+  if (!frameCtr) return;
+  const vu = SONIC_VIEW[exId] || {};
+  const az = (vu.az || 0) * Math.PI / 180, el = (vu.el || 0) * Math.PI / 180;
+  const D = frameDist;
+  camera.position.set(
+    frameCtr.x + Math.sin(az) * Math.cos(el) * D,
+    frameCtr.y + Math.sin(el) * D,
+    frameCtr.z + Math.cos(az) * Math.cos(el) * D);
+  camera.lookAt(frameCtr.x, frameCtr.y, frameCtr.z);
+}
 
 function has(exId) { return !!MAP[exId] && !!clipData[MAP[exId]]; }
 
@@ -68,9 +88,11 @@ function initGL() {
 function frameCamera() {
   const box = new THREE.Box3().setFromObject(root); const s = new THREE.Vector3(); box.getSize(s);
   const ctr = new THREE.Vector3(); box.getCenter(ctr);
-  const fitH = s.y * 1.18;
+  const fitH = s.y * 1.32;                 // extra headroom for overhead-arm poses
   const dist = (fitH * 0.5) / Math.tan((30 * Math.PI / 180) / 2);
+  ctr.y += s.y * 0.08;                     // bias down a touch so raised arms aren't cropped
   camera.position.set(ctr.x, ctr.y, ctr.z + dist); camera.lookAt(ctr.x, ctr.y, ctr.z);
+  frameCtr = ctr.clone(); frameDist = dist;
   // size the key light's shadow frustum + a ground plane to the model
   keyLight.position.set(ctr.x - s.y, ctr.y + s.y * 1.3, ctr.z + s.y);
   Object.assign(keyLight.shadow.camera, { near: 0.1, far: s.y * 6, left: -s.y, right: s.y, top: s.y, bottom: -s.y });
@@ -97,6 +119,7 @@ function mount(canvas, exId, opts) {
   const draw = () => {
     const w = canvas.width, h = canvas.height, ctx = canvas.getContext("2d");
     if (!name || !clipData[name]) return;
+    applyView(exId);                       // per-move camera angle (3/4 for sagittal moves)
     if (opts.pausedAt != null || opts.frozen) {
       poseAt(exId, opts.pausedAt != null ? opts.pausedAt : 0.3);
       renderer.render(scene, camera); blit(ctx, w, h);
