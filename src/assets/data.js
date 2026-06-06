@@ -270,9 +270,9 @@ window.SONIC_MAP = {
   fistflat:"fistflat",
   // body-drum sequence: stomp-stomp-clap-pat
   drum:"drum"
-  // lazy8 / magicnumbers / noseear are fine-hand / cross-body moves that don't read
-  // on a full-body character; they fall back to the accurate SVG mascot (overlays
-  // carry the figure-8 / numbers) pending replacement with dedicated hand-rig moves.
+  // beaktalk / fingercount / rps are finger drills on the 3D hand rig (rig:"hands",
+  // hands3d.js) — not Sonic. (They replaced the old lazy8/magicnumbers/noseear,
+  // which didn't read on a full-body character.)
   // Floor/all-fours (bear/crab/inch/catcow/dog) render via floor3d.js (window.FLOOR_MAP),
   // not Sonic — handled in PipStage, not here.
 };
