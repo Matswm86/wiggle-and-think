@@ -22,7 +22,7 @@ const RES = 620;                          // offscreen render resolution
 const FINGERS = ["index", "middle", "ring", "pinky"];
 const clamp = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
-const DURATION = { palmbeak: 2.8, fistpalm: 2.6, pointpalm: 2.8, peacepalm: 2.8, beakfist: 3.0, piano: 3.4 };
+const DURATION = { palmbeak: 2.8, fistpalm: 2.6, pointpalm: 2.8, peacepalm: 2.8, beakfist: 3.0, piano: 3.4, beaktalk: 2.6, fingercount: 4.4, rps: 3.0 };
 
 let renderer = null, scene = null, camera = null;
 let hands = null;                         // {l:{bones,rest}, r:{bones,rest}}
@@ -128,14 +128,14 @@ function poseHand(h, pose) {
 const SHAPES = {
   palm:  { fingers: [0, 0, 0, 0], thumb: 0 },                    // flat open hand
   fist:  { fingers: [1, 1, 1, 1], thumb: 1 },                    // fully closed fist
-  beak:  { fingers: [0.6, 0.6, 0.6, 0.6], thumb: 0.85, adduct: 1 }, // fingers squeezed to a point
+  beak:  { fingers: [0.6, 0.6, 0.6, 0.6], thumb: 0.85, adduct: 1, prof: 1 }, // fingers squeezed to a point — shown in PROFILE (prof) so the pinch reads, not flat-on (looks like a fist)
   point: { fingers: [0, 1, 1, 1], thumb: 1 },                    // ONLY index up, rest folded
   peace: { fingers: [0, 0, 1, 1], thumb: 1 },                    // index + middle up, rest folded
 };
 const smooth = (k) => k * k * (3 - 2 * k);
 function lerpShape(a, b, k) {
-  const aa = a.adduct || 0, ba = b.adduct || 0;
-  return { fingers: a.fingers.map((v, i) => v + (b.fingers[i] - v) * k), thumb: a.thumb + (b.thumb - a.thumb) * k, adduct: aa + (ba - aa) * k };
+  const aa = a.adduct || 0, ba = b.adduct || 0, ap = a.prof || 0, bp = b.prof || 0;
+  return { fingers: a.fingers.map((v, i) => v + (b.fingers[i] - v) * k), thumb: a.thumb + (b.thumb - a.thumb) * k, adduct: aa + (ba - aa) * k, prof: ap + (bp - ap) * k };
 }
 // hold A, quick switch, hold B, quick switch back — both hands opposite
 function swap(A, B) {
@@ -162,6 +162,51 @@ function pianoWave() {
     return { L: pose, R: pose };
   };
 }
+// Two Beaks Talking: both hands stay beaks (profile), opening & closing out of
+// phase like two birds taking turns to chat. mouth-open = looser pinch, thumb down.
+function beakTalk() {
+  const open = { fingers: [0.30, 0.30, 0.30, 0.30], thumb: 0.28, adduct: 0.92, prof: 1 };
+  const shut = { fingers: [0.64, 0.64, 0.64, 0.64], thumb: 0.88, adduct: 1, prof: 1 };
+  return (t) => {
+    const p = ((t % 1) + 1) % 1, w = 2 * Math.PI * 2;     // two chatters per cycle
+    const a = 0.5 - 0.5 * Math.cos(p * w);
+    const b = 0.5 - 0.5 * Math.cos(p * w + Math.PI);      // opposite phase
+    return { L: lerpShape(open, shut, a), R: lerpShape(open, shut, b) };
+  };
+}
+// Finger Counting 1→5→1: pop one finger up at a time (curl 0 = up, 1 = folded),
+// both hands together. A short hold on each count, a quick step between.
+function fingerCount() {
+  const C = [
+    { f: [1, 1, 1, 1], th: 1 },   // 0 — soft fists, ready
+    { f: [0, 1, 1, 1], th: 1 },   // 1 — index
+    { f: [0, 0, 1, 1], th: 1 },   // 2 — + middle
+    { f: [0, 0, 0, 1], th: 1 },   // 3 — + ring
+    { f: [0, 0, 0, 0], th: 1 },   // 4 — + pinky
+    { f: [0, 0, 0, 0], th: 0 },   // 5 — + thumb (open hand)
+  ];
+  const seq = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1], n = seq.length;
+  return (t) => {
+    const p = ((t % 1) + 1) % 1, x = p * n;
+    const i = Math.floor(x) % n, j = (i + 1) % n;
+    const k = smooth(Math.min(1, (x - Math.floor(x)) / 0.45));   // hold ~55%, quick step
+    const A = C[seq[i]], B = C[seq[j]];
+    const pose = { fingers: A.f.map((v, ix) => v + (B.f[ix] - v) * k), thumb: A.th + (B.th - A.th) * k };
+    return { L: pose, R: pose };
+  };
+}
+// Rock, Paper, Scissors: cycle fist → flat palm → peace, held on the beat,
+// both hands together with a quick switch between shapes.
+function rockPaperScissors() {
+  const seq = [SHAPES.fist, SHAPES.palm, SHAPES.peace], n = seq.length;
+  return (t) => {
+    const p = ((t % 1) + 1) % 1, x = p * n;
+    const i = Math.floor(x) % n, j = (i + 1) % n, frac = x - Math.floor(x);
+    const k = frac < 0.72 ? 0 : smooth((frac - 0.72) / 0.28);    // hold then snap
+    const pose = lerpShape(seq[i], seq[j], k);
+    return { L: pose, R: pose };
+  };
+}
 const POSES = {
   palmbeak:  swap(SHAPES.palm,  SHAPES.beak),
   fistpalm:  swap(SHAPES.fist,  SHAPES.palm),
@@ -169,6 +214,9 @@ const POSES = {
   peacepalm: swap(SHAPES.peace, SHAPES.palm),
   beakfist:  swap(SHAPES.beak,  SHAPES.fist),
   piano:     pianoWave(),
+  beaktalk:  beakTalk(),
+  fingercount: fingerCount(),
+  rps:       rockPaperScissors(),
 };
 const NEUTRAL = () => ({ L: { ...SHAPES.palm }, R: { ...SHAPES.palm } });
 
@@ -185,6 +233,11 @@ function setPose(exId, t) {
   poseHand(hands.r, pose.R);
   const near = 0.98;                            // wrist x; hands fan up & inward
   hands.l.group.rotation.z = -0.13; hands.r.group.rotation.z = 0.13;  // slight inward tilt
+  // a beak read flat-on looks like a fist (the pinch points at the camera), so turn the
+  // beak hand toward PROFILE — pinch silhouetted to the side. blended via the shape's prof.
+  const PROF = 1.15;                            // radians (~66°) at full beak
+  hands.l.group.rotation.y =  (pose.L.prof || 0) * PROF;
+  hands.r.group.rotation.y = -(pose.R.prof || 0) * PROF;
   placeHand(hands.l, -near, -1.45);
   placeHand(hands.r, near, -1.45);
 }

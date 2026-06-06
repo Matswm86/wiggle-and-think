@@ -14,9 +14,10 @@ const SFX_FOR = {
   pointpalm: () => "tap",
   peacepalm: () => "tap",
   beakfist: () => "tap",
+  beaktalk: () => "tap",
+  fingercount: () => "tap",
+  rps: () => "tap",
   fistflat: () => "whoosh",
-  magicnumbers: () => "trace",
-  noseear: (i) => (i === 1 ? "clap" : null),
 };
 function useStepSfx(exId, active, playing) {
   const prev = React.useRef(-1);
@@ -64,7 +65,7 @@ function usePhaseClock(dur, phases) {
 /* guide overlays: midline for cross-body moves, travel arrows for moves that
    go somewhere, plus the figure-8 trail & breathing pacer */
 function Overlay({ ex }) {
-  const mid = ["march", "windmill", "lazy8", "noseear", "magicnumbers"].includes(ex.id);
+  const mid = ["march", "windmill"].includes(ex.id);
   const travel = { bear: 1, inch: 1, tightrope: 1, crab: 2 }[ex.id];
   const a = ex.theme.accent;
   return (
@@ -72,20 +73,6 @@ function Overlay({ ex }) {
       {mid && <div className="midline" style={{ borderColor: a }} aria-hidden="true" />}
       {travel === 1 && <div className="travel" style={{ color: a }} aria-hidden="true">{I.right}{I.right}</div>}
       {travel === 2 && <div className="travel two" style={{ color: a }} aria-hidden="true">{I.left}{I.right}</div>}
-      {ex.id === "lazy8" &&
-        <svg className="ov8" viewBox="0 0 400 300" aria-hidden="true">
-          <path d="M200 150 C150 90 110 90 110 150 C110 210 150 210 200 150 C250 90 290 90 290 150 C290 210 250 210 200 150 Z"
-            fill="none" stroke={a} strokeOpacity="0.4" strokeWidth="8" strokeLinecap="round" strokeDasharray="2 14" />
-          <circle r="10" fill={a}>
-            <animateMotion dur="3s" repeatCount="indefinite"
-              path="M200 150 C150 90 110 90 110 150 C110 210 150 210 200 150 C250 90 290 90 290 150 C290 210 250 210 200 150 Z" />
-          </circle>
-        </svg>}
-      {ex.id === "magicnumbers" &&
-        <div className="numghost" aria-hidden="true">
-          <span style={{ color: a, transform: "scaleX(-1)" }}>3</span>
-          <span style={{ color: a }}>3</span>
-        </div>}
       {ex.id === "breathe" &&
         <div className="breathe-pacer" aria-hidden="true"><div className="bp-ring" style={{ borderColor: `color-mix(in srgb, ${a} 60%, #fff)` }}><span className="bp-txt" style={{ color: a }}>breathe</span></div></div>}
     </React.Fragment>

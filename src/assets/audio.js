@@ -200,8 +200,8 @@ window.PipAudio = (function () {
       case "windmill":                 // arm swoosh down to each foot
         if (s === 4 || s === 12) whoosh(t, 0.26);
         return false;
-      case "lazy8":                    // a soft trace swoosh each loop
-        if (s === 0) whoosh(t, 0.18);
+      case "beaktalk":                 // a soft tick as the beaks take turns
+        if (s === 0 || s === 8) woodblock(t, 660, 0.13);
         return false;
       case "tightrope":                // heel-toe step ticks
         if (s === 0 || s === 8) woodblock(t, 520, 0.16);
