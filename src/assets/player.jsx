@@ -143,7 +143,7 @@ function MusicBar({ ex, bpm, setBpm, playing, onToggle }) {
       </button>
       <div>
         <div className="lbl">Music: {b.name} <BandPill band={ex.band} small /></div>
-        <div className="sub">{bpm} BPM · {ex.duration}</div>
+        <div className="sub">{playing && window.PipAudio.state.title ? "♪ " + window.PipAudio.state.title + " · " : ""}{bpm} BPM · {ex.duration}</div>
       </div>
       <div className="bpm-slider" style={{ marginLeft: 8 }}>
         🐢
@@ -156,13 +156,13 @@ function MusicBar({ ex, bpm, setBpm, playing, onToggle }) {
 }
 
 /* the shared stage + breakdown body used by Player and Session */
-function MoveBody({ ex, spd, frozen, setDur, active }) {
+function MoveBody({ ex, spd, frozen, setDur, active, lockBpm }) {
   return (
     <div className="player-body">
       <div className="pleft">
         <div className="pstage-wrap" style={{ background: `color-mix(in srgb, ${ex.theme.accent} 10%, #fff)` }}>
           <Overlay ex={ex} />
-          <PipStage ex={ex} className="pstage" frozen={frozen} speed={SPEEDS[spd]} onMeasure={setDur} />
+          <PipStage ex={ex} className="pstage" frozen={frozen} speed={SPEEDS[spd]} onMeasure={setDur} lockBpm={lockBpm} />
           {frozen && <div className="freeze-ov"><div className="card2">❄ FREEZE!</div></div>}
         </div>
         <div className="livecap">
@@ -192,6 +192,7 @@ function Player({ ex, index, total, onNav, onClose, soundOn }) {
   const [frozen, setFrozen] = React.useState(false);
   const [spd, setSpd] = React.useState("slow");
   const [dur, setDur] = React.useState(0);
+  const [lockBpm, setLockBpm] = React.useState(null);
   const frozenRef = React.useRef(setFrozen); frozenRef.current = setFrozen;
   const active = usePhaseClock(frozen ? 0 : dur, window.PHASES[ex.id]);
   useStepSfx(ex.id, active, playing);
@@ -199,17 +200,19 @@ function Player({ ex, index, total, onNav, onClose, soundOn }) {
   React.useEffect(() => {
     setBpm(midBpm(ex)); setFrozen(false); setPlaying(false);
     window.PipAudio.stop();
+    if (window.PipAudio.preload) window.PipAudio.preload(ex.band);   // fetch the band's track early
     return () => window.PipAudio.stop();
   }, [ex.id]);
 
   React.useEffect(() => {
-    if (!playing) { window.PipAudio.stop(); setFrozen(false); return; }
+    if (!playing) { window.PipAudio.stop(); setFrozen(false); setLockBpm(null); return; }
     window.PipAudio.ensure();
     window.PipAudio.start(ex.band, bpm, ex.id === "freeze" ? {
       freeze: true,
       onFreeze: () => frozenRef.current(true),
       onUnfreeze: () => frozenRef.current(false),
     } : { sfx: ex.id });
+    setLockBpm(window.PipAudio.state.bpm);   // effective BPM — animations lock to the beat
   }, [playing, bpm, ex.id]);
 
   function toggle() { if (soundOn) setPlaying(p => !p); }
@@ -226,7 +229,7 @@ function Player({ ex, index, total, onNav, onClose, soundOn }) {
         <button className="close-x" onClick={onClose} aria-label="Close">{I.close}</button>
       </div>
 
-      <MoveBody ex={ex} spd={spd} frozen={frozen} setDur={setDur} active={frozen ? (window.PHASES[ex.id] || []).length - 1 : active} />
+      <MoveBody ex={ex} spd={spd} frozen={frozen} setDur={setDur} active={frozen ? (window.PHASES[ex.id] || []).length - 1 : active} lockBpm={playing && !frozen ? lockBpm : null} />
 
       <div className="controls">
         <button className="navbtn" onClick={() => onNav(-1)} disabled={index === 0} aria-label="Previous">{I.left}</button>
@@ -254,13 +257,14 @@ function Session({ onClose, soundOn }) {
   const [frozen, setFrozen] = React.useState(false);
   const [spd, setSpd] = React.useState("slow");
   const [dur, setDur] = React.useState(0);
+  const [lockBpm, setLockBpm] = React.useState(null);
   const frozenRef = React.useRef(setFrozen); frozenRef.current = setFrozen;
   const ex = list[idx];
   const active = usePhaseClock(frozen ? 0 : dur, window.PHASES[ex.id]);
   useStepSfx(ex.id, active, running && soundOn);
 
   React.useEffect(() => {
-    if (done) { window.PipAudio.stop(); return; }
+    if (done) { window.PipAudio.stop(); setLockBpm(null); return; }
     if (running && soundOn) {
       window.PipAudio.ensure();
       window.PipAudio.start(ex.band, midBpm(ex), ex.id === "freeze" ? {
@@ -268,7 +272,10 @@ function Session({ onClose, soundOn }) {
         onFreeze: () => frozenRef.current(true),
         onUnfreeze: () => frozenRef.current(false),
       } : { sfx: ex.id });
-    } else { window.PipAudio.stop(); setFrozen(false); }
+      setLockBpm(window.PipAudio.state.bpm);
+      const ni = list[idx + 1];                                   // prefetch the next move's track
+      if (ni && window.PipAudio.preload) window.PipAudio.preload(ni.band);
+    } else { window.PipAudio.stop(); setFrozen(false); setLockBpm(null); }
     return () => window.PipAudio.stop();
   }, [idx, running, done, soundOn]);
 
@@ -317,7 +324,7 @@ function Session({ onClose, soundOn }) {
         <button className="close-x" onClick={onClose} style={{ marginLeft: 14 }}>{I.close}</button>
       </div>
 
-      <MoveBody ex={ex} spd={spd} frozen={frozen} setDur={setDur} active={frozen ? (window.PHASES[ex.id] || []).length - 1 : active} />
+      <MoveBody ex={ex} spd={spd} frozen={frozen} setDur={setDur} active={frozen ? (window.PHASES[ex.id] || []).length - 1 : active} lockBpm={running && soundOn && !frozen ? lockBpm : null} />
 
       <div className="controls">
         <div className="progress">

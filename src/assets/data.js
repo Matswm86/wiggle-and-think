@@ -281,6 +281,53 @@ window.SONIC_MAP = {
    proportions read as a blob on all fours, so these use the kid-creature rig. */
 window.FLOOR_MAP = { bear:1, crab:1, inch:1, catcow:1, dog:1 };
 
+/* BEATS — how many music beats one animation cycle spans while music plays.
+   The player locks each move's cycle to beats×60/bpm so movements land ON
+   the beat (march steps on the beat, drum = stomp-stomp-clap-pat on 4, one
+   breath = 8 beats). Tune here, not in the engines. */
+window.BEATS = {
+  march: 2, jacks: 2, flamingo: 2, tightrope: 2,
+  kanga: 4, starjump: 4, windmill: 4, drum: 4, clap: 4, fistflat: 4,
+  palmbeak: 4, fistpalm: 4, pointpalm: 4, peacepalm: 4, beakfist: 4, beaktalk: 4,
+  rps: 6, piano: 8, fingercount: 10,
+  tree: 8, airplane: 8, breathe: 8,
+  bear: 4, crab: 4, inch: 6, catcow: 8, dog: 8,
+  freeze: 16,
+};
+
+/* MUSIC_TRACKS — real, baked loop files (tools/make_music.py): each starts ON
+   beat 1 and is a whole number of 4/4 bars, so audio.js loops the entire file
+   and aligns its beat grid. band → [{src,bpm,bars,title,artist,license}].
+   bpm = locally MEASURED (autocorrelation), not the catalogue claim.
+   The player picks the entry nearest the requested BPM and re-speeds ≤ ~10 %.
+   Licenses: CREDITS.md + the grown-ups page (CC BY 4.0 needs attribution). */
+window.MUSIC_TRACKS = {
+  A: [
+    { src: "assets/music/facile.mp3", bpm: 57.42, bars: 32, title: "Facile", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+    { src: "assets/music/teller.mp3", bpm: 65.42, bars: 32, title: "Teller of the Tales", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+    { src: "assets/music/happyhome.mp3", bpm: 69.84, bars: 31, title: "Happy Home", artist: "Michael Ramir C.", license: "Mixkit Free" },
+  ],
+  B: [
+    { src: "assets/music/sneaky.mp3", bpm: 87.59, bars: 32, title: "Sneaky Snitch", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+    { src: "assets/music/carefree.mp3", bpm: 95.7, bars: 32, title: "Carefree", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+    { src: "assets/music/riley.mp3", bpm: 102.34, bars: 32, title: "Life of Riley", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+  ],
+  C: [
+    { src: "assets/music/riley.mp3", bpm: 102.34, bars: 32, title: "Life of Riley", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+    { src: "assets/music/amazingplan.mp3", bpm: 114.84, bars: 32, title: "The Amazing Plan", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+    { src: "assets/music/banjo.mp3", bpm: 120.19, bars: 32, title: "Banjo Man in Africa", artist: "Michael Ramir C.", license: "Mixkit Free" },
+  ],
+  D: [
+    { src: "assets/music/fluffduck.mp3", bpm: 121.6, bars: 30, title: "Fluffing a Duck", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+    { src: "assets/music/merrygo.mp3", bpm: 132.51, bars: 32, title: "Merry Go", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+    { src: "assets/music/monkeys.mp3", bpm: 143.55, bars: 32, title: "Monkeys Spinning Monkeys", artist: "Kevin MacLeod", license: "CC BY 4.0" },
+  ],
+  E: [
+    { src: "assets/music/moveyourbody.mp3", bpm: 90.67, bars: 32, title: "Move Your Body", artist: "Michael Ramir C.", license: "Mixkit Free" },
+    { src: "assets/music/bamboo.mp3", bpm: 99.38, bars: 31, title: "Bamboo Blitz", artist: "Tsorthan Grove", license: "CC0" },
+  ],
+};
+
 /* music band reference */
 window.BANDS = {
   A:{name:"Calm",   range:"55–75 BPM",  feel:"Slow & soft — breathing, balance, cool-down"},

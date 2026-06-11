@@ -10,7 +10,7 @@
      state  {playing, band, bpm}
    ============================================================ */
 window.PipAudio = (function () {
-  let ctx = null, master = null, noiseBuf = null;
+  let ctx = null, master = null, noiseBuf = null, comp = null, out = null;
   let timer = null;
   let step = 0;                 // 16th-note counter within a bar (0..15)
   let nextTime = 0;
@@ -20,7 +20,19 @@ window.PipAudio = (function () {
   let freezeMode = false, frozen = false, unfreezeAt = 0, barsLeft = 3;
   let sfxId = null, barCount = 0;
   let cb = {};
-  const state = { playing: false, band: "C", bpm: 110 };
+  // ---- real-track state (window.MUSIC_TRACKS manifest, baked loops) ----
+  let trackGain = null;         // track bus → compressor (bypasses synth lowpass+reverb)
+  const trackBuf = {};          // src → decoded AudioBuffer
+  let track = null;             // chosen manifest entry for this run
+  let trackRate = 1;            // playbackRate fitting track BPM to the requested BPM
+  let trackNode = null;         // live AudioBufferSourceNode
+  let trackOn = false;          // true once the track joined the beat grid
+  let trackResume = 0;          // bar-aligned buffer offset to resume at (freeze)
+  let loadToken = 0;            // invalidates stale async decodes
+  const state = { playing: false, band: "C", bpm: 110, title: null };
+  function announce() {
+    try { window.dispatchEvent(new CustomEvent("pip-music", { detail: { playing: state.playing, bpm: state.bpm } })); } catch (e) { /* no-op */ }
+  }
 
   function ensure() {
     if (!ctx) {
@@ -32,10 +44,13 @@ window.PipAudio = (function () {
       // oscillator "chiptune" feel. master → lp → comp → out, with a
       // pre-lowpass reverb send (highpassed so the kick stays clean).
       const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 8200; lp.Q.value = 0.4;
-      const comp = ctx.createDynamicsCompressor();
+      comp = ctx.createDynamicsCompressor();
       comp.threshold.value = -18; comp.knee.value = 22; comp.ratio.value = 4;
       comp.attack.value = 0.004; comp.release.value = 0.18;
-      master.connect(lp); lp.connect(comp); comp.connect(ctx.destination);
+      out = ctx.createGain(); out.gain.value = 1;
+      master.connect(lp); lp.connect(comp); comp.connect(out); out.connect(ctx.destination);
+      // real tracks join post-lowpass (they're already produced; no extra filtering)
+      trackGain = ctx.createGain(); trackGain.gain.value = 0; trackGain.connect(comp);
       const ir = ctx.createBuffer(2, ctx.sampleRate * 1.6, ctx.sampleRate);
       for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c);
         for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.4);
@@ -54,7 +69,71 @@ window.PipAudio = (function () {
     return ctx;
   }
 
-  function setVolume(v) { if (master) master.gain.value = Math.max(0, Math.min(1, v)); }
+  function setVolume(v) { if (out) out.gain.value = Math.max(0, Math.min(1, v)); }
+
+  // ---- real-track engine --------------------------------------------
+  // Baked loops (tools/make_music.py): every file starts ON beat 1 and is a
+  // whole number of 4/4 bars, so loop = whole file and the beat grid is
+  // simply trackStart + k*spb. The synth groove covers the first moments
+  // while the file decodes, then the track joins at the next bar boundary.
+  function pickTrack(b, reqBpm) {
+    const list = (window.MUSIC_TRACKS || {})[b] || [];
+    let best = null, bestD = 1e9;
+    for (const t of list) {
+      const d = Math.abs(Math.log((reqBpm || t.bpm) / t.bpm));
+      if (d < bestD) { bestD = d; best = t; }
+    }
+    return best;
+  }
+  function loadTrack(t, token) {
+    if (!t || trackBuf[t.src]) return Promise.resolve();
+    return fetch(t.src)
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.arrayBuffer(); })
+      .then((ab) => ctx.decodeAudioData(ab))
+      .then((buf) => { if (token === loadToken) trackBuf[t.src] = buf; })
+      .catch((e) => console.warn("PipAudio track load failed (synth fallback stays):", t.src, e));
+  }
+  function preload(b) {
+    const t = pickTrack(b, null);
+    if (t && !trackBuf[t.src]) { ensure(); loadTrack(t, loadToken); }
+  }
+  // start the source so its beats land exactly on the scheduler's grid
+  function beginTrackAt(t0) {
+    const buf = trackBuf[track.src];
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true; src.playbackRate.value = trackRate;
+    // loop on the manifest's exact bar count, NOT the file edge — mp3 encoder
+    // padding would otherwise add a seam and drift the beat grid
+    src.loopStart = 0;
+    src.loopEnd = Math.min(track.bars * 4 * 60 / track.bpm, buf.duration);
+    src.connect(trackGain);
+    src.start(t0, trackResume || 0);
+    trackNode = { src, startT: t0, startOff: trackResume || 0 };
+    trackOn = true; trackResume = 0; state.on = true;
+    trackGain.gain.cancelScheduledValues(t0);
+    trackGain.gain.setValueAtTime(0.0001, t0);
+    trackGain.gain.exponentialRampToValueAtTime(1, t0 + 0.2);
+  }
+  // freeze: stop at tStop, remember a BAR-ALIGNED resume offset so the
+  // restart is musically clean
+  function pauseTrack(tStop) {
+    if (!trackNode) return;
+    const n = trackNode; trackNode = null; trackOn = false; state.on = false;
+    try {
+      const loopLen = Math.min(track.bars * 4 * 60 / track.bpm, n.src.buffer.duration);
+      const pos = (n.startOff + Math.max(0, tStop - n.startT) * trackRate) % loopLen;
+      const barLen = 4 * 60 / track.bpm;
+      trackResume = (Math.round(pos / barLen) * barLen) % loopLen;
+      trackGain.gain.cancelScheduledValues(tStop);
+      trackGain.gain.setValueAtTime(1, tStop);
+      n.src.stop(tStop + 0.02);
+    } catch (e) { try { n.src.stop(); } catch (e2) { /* already stopped */ } }
+  }
+  function killTrack() {
+    if (trackNode) { try { trackNode.src.stop(); } catch (e) { /* already stopped */ } }
+    trackNode = null; trackOn = false; trackResume = 0; state.on = false;
+    if (trackGain && ctx) { trackGain.gain.cancelScheduledValues(0); trackGain.gain.value = 0; }
+  }
 
   // ---- instruments (warm / acoustic-leaning, no raw square or saw) ----
   function kick(t, gain = 1) {
@@ -323,16 +402,22 @@ window.PipAudio = (function () {
   function playStep(t, s) {
     if (s === 0) barCount++;   // bump first so the whole bar shares one chord
     const solo = sfxStep(t, s);
-    if (!solo) groove(t, s);
+    if (!solo && !trackOn) groove(t, s);   // synth only until the track joins
   }
 
   function schedule() {
     while (nextTime < ctx.currentTime + AHEAD) {
+      // a decoded track joins the grid at the next bar boundary; the baked
+      // loops start ON beat 1, so beats land exactly on the step clock
+      if (!frozen && step === 0 && track && !trackOn && trackBuf[track.src]) beginTrackAt(nextTime);
       if (freezeMode) {
         if (frozen) {
-          if (ctx.currentTime >= unfreezeAt) {
+          // restart only on a bar boundary so the track re-enters on a downbeat
+          if (ctx.currentTime >= unfreezeAt && step === 0) {
             frozen = false; barsLeft = 2 + Math.floor(Math.random() * 4);
+            if (track && trackBuf[track.src]) beginTrackAt(nextTime);
             cb.onUnfreeze && cb.onUnfreeze();
+            playStep(nextTime, step);
           }
         } else {
           playStep(nextTime, step);
@@ -344,6 +429,7 @@ window.PipAudio = (function () {
           if (barsLeft <= 0) {
             frozen = true;
             unfreezeAt = nextTime + 1.4 + Math.random() * 1.8;
+            pauseTrack(nextTime + spb / 4);   // silence lands on the bar line
             cb.onFreeze && cb.onFreeze();
           }
         }
@@ -359,20 +445,33 @@ window.PipAudio = (function () {
     ensure();
     stop();
     band = b || "C";
-    state.band = band; state.bpm = bpm; state.playing = true;
-    spb = 60 / (bpm || 110);
+    const req = bpm || 110;
+    // tempo-fit: pick the band track nearest the requested BPM and pitch it
+    // at most ±10-12 % — the EFFECTIVE bpm (what actually sounds) drives the
+    // step grid, the SFX overlay and the beat-locked animations.
+    track = pickTrack(band, req);
+    trackRate = track ? Math.max(0.9, Math.min(1.12, req / track.bpm)) : 1;
+    const eff = track ? Math.round(track.bpm * trackRate * 10) / 10 : req;
+    state.band = band; state.bpm = eff; state.playing = true;
+    state.title = track ? track.title : null;
+    spb = 60 / eff;
     step = 0; barCount = 0; nextTime = ctx.currentTime + 0.06;
     opts = opts || {};
     sfxId = opts.sfx || null;
     freezeMode = !!opts.freeze; frozen = false;
     barsLeft = 2 + Math.floor(Math.random() * 3);
     cb = { onFreeze: opts.onFreeze, onUnfreeze: opts.onUnfreeze };
+    if (track) loadTrack(track, ++loadToken);   // synth groove covers the decode
     timer = setInterval(schedule, LOOK * 1000);
+    announce();
   }
 
   function stop() {
     if (timer) { clearInterval(timer); timer = null; }
-    state.playing = false; frozen = false; freezeMode = false;
+    killTrack(); loadToken++;
+    track = null;
+    state.playing = false; state.title = null; frozen = false; freezeMode = false;
+    announce();
   }
 
   // ---- one-shot sound effects (phase-synced cues for the Clever Hands moves) ----
@@ -388,5 +487,5 @@ window.PipAudio = (function () {
     }
   }
 
-  return { ensure, start, stop, setVolume, sfx, state };
+  return { ensure, start, stop, setVolume, sfx, preload, state };
 })();

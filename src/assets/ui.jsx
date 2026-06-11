@@ -12,9 +12,15 @@ function pipHTML(ex, extra) {
   return s.replace(/class="(pip[-\w]*)"/, `class="$1 ${cls}"`);
 }
 
-function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure }) {
+function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure, lockBpm }) {
   const ref = React.useRef(null);
   const html = React.useMemo(() => pipHTML(ex, frozen ? "frozen" : ""), [ex.id, frozen]);
+  // beat-lock: while music plays, one animation cycle = BEATS[ex] music beats,
+  // so the move lands on the beat. dur/speed = cycle secs → speed = dur*bpm/(60*beats)
+  const beatSpd = (dur) => {
+    const n = lockBpm && window.BEATS && window.BEATS[ex.id];
+    return n ? (dur * lockBpm) / (60 * n) : 0;
+  };
   React.useEffect(() => {
     const el = ref.current; if (!el) return;
     const spd = speed || 1;
@@ -31,8 +37,9 @@ function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure }) {
         canvas.height = Math.max(64, Math.round((rect.height || 320) * dpr));
         const isMain = (className || "").includes("pstage");
         const pAt = pausedAt != null ? pausedAt : (isMain && !frozen ? null : 0.3);
-        ctrl = window.Sonic3D.mount(canvas, ex.id, { speed: spd, pausedAt: pAt, frozen });
-        if (onMeasure) onMeasure((window.Sonic3D.DURATION[ex.id] || 2.0) / spd);
+        const sp = beatSpd(window.Sonic3D.DURATION[ex.id] || 2.0) || spd;
+        ctrl = window.Sonic3D.mount(canvas, ex.id, { speed: sp, pausedAt: pAt, frozen });
+        if (onMeasure) onMeasure((window.Sonic3D.DURATION[ex.id] || 2.0) / sp);
       };
       if (window.Sonic3D) start();
       else window.addEventListener("sonic3d-ready", start, { once: true });
@@ -51,8 +58,9 @@ function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure }) {
         canvas.height = Math.max(64, Math.round((rect.height || 320) * dpr));
         const isMain = (className || "").includes("pstage");
         const pAt = pausedAt != null ? pausedAt : (isMain && !frozen ? null : 0.3);
-        ctrl = window.Floor3D.mount(canvas, ex.id, { speed: spd, pausedAt: pAt, frozen });
-        if (onMeasure) onMeasure((window.Floor3D.DURATION[ex.id] || 2.6) / spd);
+        const sp = beatSpd(window.Floor3D.DURATION[ex.id] || 2.6) || spd;
+        ctrl = window.Floor3D.mount(canvas, ex.id, { speed: sp, pausedAt: pAt, frozen });
+        if (onMeasure) onMeasure((window.Floor3D.DURATION[ex.id] || 2.6) / sp);
       };
       if (window.Floor3D) start();
       else window.addEventListener("floor3d-ready", start, { once: true });
@@ -71,8 +79,9 @@ function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure }) {
         canvas.height = Math.max(64, Math.round((rect.height || 300) * dpr));
         const isMain = (className || "").includes("pstage");
         const pAt = pausedAt != null ? pausedAt : (isMain && !frozen ? null : 0.28);
-        ctrl = window.Hands3D.mount(canvas, ex.id, { speed: spd, pausedAt: pAt, frozen });
-        if (onMeasure) onMeasure((window.Hands3D.DURATION[ex.id] || 3.4) / spd);
+        const sp = beatSpd(window.Hands3D.DURATION[ex.id] || 3.4) || spd;
+        ctrl = window.Hands3D.mount(canvas, ex.id, { speed: sp, pausedAt: pAt, frozen });
+        if (onMeasure) onMeasure((window.Hands3D.DURATION[ex.id] || 3.4) / sp);
       };
       if (window.Hands3D) start();
       else window.addEventListener("hands3d-ready", start, { once: true });
@@ -101,7 +110,7 @@ function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure }) {
       }
     });
     if (onMeasure && dur) onMeasure(dur);
-  }, [html, speed, pausedAt, frozen, ex.id]);
+  }, [html, speed, pausedAt, frozen, ex.id, lockBpm]);
   return <div ref={ref} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 

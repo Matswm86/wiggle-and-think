@@ -55,11 +55,11 @@ function Grownups({ onClose }) {
         </p>
 
         <h3>The music system</h3>
-        <p>Tempo is matched to each move’s energy. Every beat here is generated live in your browser —
-          no files, no licensing — so it always fits the exercise. For your own playlists, the source
-          document recommends Pixabay Music, Incompetech (Kevin&nbsp;MacLeod, CC&nbsp;BY), Musopen
-          (public-domain classical) and Freesound (CC0 drum loops). Use <b>instrumental</b> tracks so
-          words don’t compete with the movement.</p>
+        <p>Tempo is matched to each move’s energy: real instrumental tracks, tempo-fitted to the
+          exercise and looped on the bar, with the character’s movements locked to the beat. The
+          tempo slider gently re-speeds the track (never more than ~10%), and the freeze-dance game
+          stops and restarts the music on the bar line. Instrumental only, so words never compete
+          with the movement.</p>
         <table className="tbl">
           <thead><tr><th>Band</th><th>Tempo</th><th>Use for</th></tr></thead>
           <tbody>
@@ -67,6 +67,20 @@ function Grownups({ onClose }) {
               <tr key={k}><td><span className={"bandtag b" + k}>♪ {b.name}</span></td><td>{b.range}</td><td>{b.feel}</td></tr>)}
           </tbody>
         </table>
+
+        <h3>Music credits</h3>
+        <p style={{ fontSize: 14 }}>
+          Tracks by <b>Kevin MacLeod</b> (<a href="https://incompetech.com" target="_blank" rel="noreferrer">incompetech.com</a>),
+          licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">Creative
+          Commons: By Attribution 4.0</a>; tracks from <a href="https://mixkit.co" target="_blank" rel="noreferrer">Mixkit</a>
+          (<a href="https://mixkit.co/license/#musicFree" target="_blank" rel="noreferrer">Mixkit Stock Music Free License</a>);
+          and CC0 work from <a href="https://opengameart.org" target="_blank" rel="noreferrer">OpenGameArt</a>.
+        </p>
+        <ul style={{ fontSize: 13, color: "var(--ink-soft)", columns: 2 }}>
+          {Object.values(window.MUSIC_TRACKS || {}).flat()
+            .filter((t, i, a) => a.findIndex((x) => x.src === t.src) === i)
+            .map((t) => <li key={t.src}>{t.title} — {t.artist} ({t.license})</li>)}
+        </ul>
 
         <h3>A note on ages 4–7</h3>
         <p>That span hides a big developmental gap. Four-year-olds often can’t yet reliably cross the
