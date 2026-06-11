@@ -47,6 +47,43 @@ function applyView(exId) {
 
 function has(exId) { return !!MAP[exId] && !!clipData[MAP[exId]]; }
 
+// ---- procedural root motion ----------------------------------------
+// The retarget bake zeroes hips translation (the clips are rotation-only),
+// so the body's physical travel — jump lift-off, march bob, balance sway —
+// is re-added here on top of each clip. Heights are fractions of model height;
+// windows are normalized clip time, matched to each clip's leg phases.
+const easeArc = (p) => 4 * p * (1 - p);              // parabolic flight arc
+const MOTION = {
+  kanga:    { hops: [[0.38, 0.72, 0.16]] },          // one big jump per cycle
+  starjump: { hops: [[0.33, 0.78, 0.13]] },          // airborne through the X
+  flamingo: { hops: [[0.36, 0.72, 0.06]] },          // light one-leg hop
+  jacks:    { bounce: { freq: 2, h: 0.045 } },       // continuous two-touch bounce
+  march:    { bob: { freq: 2, h: 0.022 } },          // rise on each knee lift
+  breathe:  { bob: { freq: 1, h: 0.012 } },          // slow rise on the inhale
+  drum:     { dips: [[0.05, 0.20, 0.025], [0.30, 0.45, 0.025]] },  // stomp dips
+  windmill: { dips: [[0.12, 0.42, 0.04], [0.62, 0.92, 0.04]] },    // sink into each reach
+  tree:      { sway: 1 },                            // balance micro-corrections
+  airplane:  { sway: 0.8 },
+  tightrope: { sway: 1.3 },
+};
+let modelH = 0, baseY = 0;
+function applyMotion(exId, t) {
+  const m = MOTION[exId];
+  let y = 0, rz = 0;
+  if (m && modelH) {
+    if (m.hops) for (const [s, e, h] of m.hops) if (t >= s && t <= e) y += h * easeArc((t - s) / (e - s));
+    if (m.dips) for (const [s, e, h] of m.dips) if (t >= s && t <= e) y -= h * easeArc((t - s) / (e - s));
+    if (m.bounce) y += m.bounce.h * Math.abs(Math.sin(Math.PI * m.bounce.freq * t));
+    if (m.bob) y += m.bob.h * (0.5 - 0.5 * Math.cos(2 * Math.PI * m.bob.freq * t));
+    if (m.sway) {
+      const T = performance.now() / 1000;
+      rz = 0.014 * m.sway * (0.6 * Math.sin(0.9 * T) + 0.4 * Math.sin(2.07 * T));
+    }
+  }
+  root.position.y = baseY + y * modelH;
+  root.rotation.z = rz;
+}
+
 function buildClips(gltf) {
   const byName = {};
   root.traverse((o) => { if (o.isBone) byName[o.name] = o; });
@@ -91,6 +128,7 @@ function frameCamera() {
   const fitH = s.y * 1.32;                 // extra headroom for overhead-arm poses
   const dist = (fitH * 0.5) / Math.tan((30 * Math.PI / 180) / 2);
   ctr.y += s.y * 0.08;                     // bias down a touch so raised arms aren't cropped
+  modelH = s.y; baseY = root.position.y;   // reference for the root-motion layer
   camera.position.set(ctr.x, ctr.y, ctr.z + dist); camera.lookAt(ctr.x, ctr.y, ctr.z);
   frameCtr = ctr.clone(); frameDist = dist;
   // size the key light's shadow frustum + a ground plane to the model
@@ -121,13 +159,15 @@ function mount(canvas, exId, opts) {
     if (!name || !clipData[name]) return;
     applyView(exId);                       // per-move camera angle (3/4 for sagittal moves)
     if (opts.pausedAt != null || opts.frozen) {
-      poseAt(exId, opts.pausedAt != null ? opts.pausedAt : 0.3);
+      const pt = opts.pausedAt != null ? opts.pausedAt : 0.3;
+      poseAt(exId, pt); applyMotion(exId, pt);
       renderer.render(scene, camera); blit(ctx, w, h);
     } else {
       if (liveLoop) cancelAnimationFrame(liveLoop.raf);
       const dur = clipDur[name] || 2, spd = opts.speed || 1, t0 = performance.now();
       const loop = (now) => {
-        poseAt(exId, ((now - t0) / 1000 * spd / dur) % 1);
+        const t = ((now - t0) / 1000 * spd / dur) % 1;
+        poseAt(exId, t); applyMotion(exId, t);
         renderer.render(scene, camera); blit(ctx, w, h);
         liveLoop.raf = requestAnimationFrame(loop);
       };

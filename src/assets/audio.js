@@ -26,8 +26,24 @@ window.PipAudio = (function () {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       master = ctx.createGain();
-      master.gain.value = 0.5;
-      master.connect(ctx.destination);
+      master.gain.value = 0.55;
+      // warm master chain: lowpass takes off the synthetic top end, the
+      // compressor glues, and a small synthesized room stops the dry
+      // oscillator "chiptune" feel. master → lp → comp → out, with a
+      // pre-lowpass reverb send (highpassed so the kick stays clean).
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 8200; lp.Q.value = 0.4;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 22; comp.ratio.value = 4;
+      comp.attack.value = 0.004; comp.release.value = 0.18;
+      master.connect(lp); lp.connect(comp); comp.connect(ctx.destination);
+      const ir = ctx.createBuffer(2, ctx.sampleRate * 1.6, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.4);
+      }
+      const verb = ctx.createConvolver(); verb.buffer = ir;
+      const vhp = ctx.createBiquadFilter(); vhp.type = "highpass"; vhp.frequency.value = 260;
+      const vg = ctx.createGain(); vg.gain.value = 0.16;
+      master.connect(vhp); vhp.connect(verb); verb.connect(vg); vg.connect(comp);
       // one shared noise buffer
       const n = ctx.sampleRate * 1;
       noiseBuf = ctx.createBuffer(1, n, ctx.sampleRate);
@@ -40,15 +56,15 @@ window.PipAudio = (function () {
 
   function setVolume(v) { if (master) master.gain.value = Math.max(0, Math.min(1, v)); }
 
-  // ---- instruments -------------------------------------------------
+  // ---- instruments (warm / acoustic-leaning, no raw square or saw) ----
   function kick(t, gain = 1) {
     const o = ctx.createOscillator(), g = ctx.createGain();
-    o.frequency.setValueAtTime(150, t);
-    o.frequency.exponentialRampToValueAtTime(48, t + 0.12);
+    o.frequency.setValueAtTime(118, t);
+    o.frequency.exponentialRampToValueAtTime(44, t + 0.11);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.9 * gain, t + 0.005);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
-    o.connect(g).connect(master); o.start(t); o.stop(t + 0.2);
+    g.gain.exponentialRampToValueAtTime(0.85 * gain, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
+    o.connect(g).connect(master); o.start(t); o.stop(t + 0.19);
   }
   function noise(t, dur, hp, gain) {
     const s = ctx.createBufferSource(); s.buffer = noiseBuf;
@@ -58,8 +74,28 @@ window.PipAudio = (function () {
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + dur + 0.02);
   }
-  function clap(t, gain = 0.5) { noise(t, 0.13, 1100, gain); }
-  function hat(t, gain = 0.18) { noise(t, 0.04, 7000, gain); }
+  // shaker: a soft band-limited "chick" — replaces the harsh hi-hat
+  function shaker(t, gain = 0.12) {
+    const s = ctx.createBufferSource(); s.buffer = noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 5400; f.Q.value = 1.1;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
+    s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + 0.08);
+  }
+  const hat = shaker;
+  // real-clap character: three micro-bursts through a bandpass
+  function clap(t, gain = 0.5) {
+    for (const [dt, k] of [[0, 0.6], [0.012, 0.8], [0.026, 1]]) {
+      const s = ctx.createBufferSource(); s.buffer = noiseBuf;
+      const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1500; f.Q.value = 0.8;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(gain * k * 0.8, t + dt);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dt + (k === 1 ? 0.16 : 0.03));
+      s.connect(f).connect(g).connect(master); s.start(t + dt); s.stop(t + dt + 0.2);
+    }
+  }
   function tone(t, freq, dur, gain, type = "triangle") {
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.type = type; o.frequency.value = freq;
@@ -68,17 +104,49 @@ window.PipAudio = (function () {
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.02);
   }
-  function pad(t, freq, dur, gain = 0.16) {
-    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
-    o.type = "sine"; o2.type = "sine"; o.frequency.value = freq; o2.frequency.value = freq * 2.001;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(gain, t + dur * 0.4);
-    g.gain.linearRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); o2.connect(g); g.connect(master);
-    o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur);
+  // kalimba: warm music-box pluck — sine fundamental + two fast-dying partials
+  function kalimba(t, freq, gain = 0.2) {
+    for (const [mul, k, dec] of [[1, 1, 0.55], [3.03, 0.28, 0.07], [6.21, 0.12, 0.03]]) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = freq * mul;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(gain * k, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+      o.connect(g).connect(master); o.start(t); o.stop(t + dec + 0.03);
+    }
   }
-  function woodblock(t, freq = 900, gain = 0.3) { tone(t, freq, 0.06, gain, "square"); }
-  function bell(t, freq, gain = 0.2) { tone(t, freq, 0.35, gain, "triangle"); }
+  // pluck: a soft "string" — triangle through a fast-closing lowpass
+  function pluck(t, freq, gain = 0.3, dec = 0.3) {
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = "triangle"; o.frequency.value = freq;
+    f.type = "lowpass"; f.Q.value = 0.7;
+    f.frequency.setValueAtTime(Math.min(freq * 7, 4200), t);
+    f.frequency.exponentialRampToValueAtTime(Math.max(freq * 1.6, 120), t + 0.12);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+    o.connect(f).connect(g).connect(master); o.start(t); o.stop(t + dec + 0.03);
+  }
+  // strum: a chord rolled on the kalimba (12 ms between strings)
+  function strum(t, freqs, gain = 0.1) { freqs.forEach((f, i) => kalimba(t + i * 0.012, f, gain)); }
+  // pad: three softly-detuned triangles behind a lowpass — warm chord bed
+  function pad(t, freqs, dur, gain = 0.05) {
+    const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 950; f.Q.value = 0.4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(gain, t + dur * 0.35);
+    g.gain.linearRampToValueAtTime(0.0001, t + dur);
+    f.connect(g); g.connect(master);
+    for (const fr of freqs) for (const det of [0.9965, 1.0035]) {
+      const o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = fr * det;
+      o.connect(f); o.start(t); o.stop(t + dur + 0.02);
+    }
+  }
+  // soft two-partial tick (replaces the square-wave woodblock)
+  function woodblock(t, freq = 900, gain = 0.3) {
+    tone(t, freq, 0.045, gain * 0.8, "sine"); tone(t, freq * 2.4, 0.025, gain * 0.3, "sine");
+  }
+  function bell(t, freq, gain = 0.2) { kalimba(t, freq, gain); }
 
   // ---- character SFX (movement sounds) ------------------------------
   // boing: springy pitch-up — the take-off of a jump/hop
@@ -134,40 +202,76 @@ window.PipAudio = (function () {
     o.start(t); o2.start(t); o.stop(t + 1.8); o2.stop(t + 1.8);
   }
 
-  // pentatonic-ish note pools (Hz)
-  const PENTA = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25];
-  const CALM  = [261.63, 329.63, 392.0, 523.25, 392.0, 329.63]; // gentle arpeggio loop
+  // ---- harmony: a 4-bar C-major loop per band ------------------------
+  // chord = {root: bass Hz, tones: [3 chord tones around C4]}
+  const CHORDS = {
+    C:  { root: 65.41, tones: [261.63, 329.63, 392.00] },
+    G:  { root: 98.00, tones: [246.94, 293.66, 392.00] },
+    Am: { root: 55.00, tones: [220.00, 261.63, 329.63] },
+    F:  { root: 87.31, tones: [220.00, 261.63, 349.23] },
+  };
+  const PROG = {
+    A: ["C", "Am", "F", "C"],
+    B: ["C", "F", "C", "G"],
+    C: ["C", "Am", "F", "G"],
+    D: ["C", "G", "Am", "F"],
+    E: ["C", "C", "F", "G"],
+  };
+  // 2-bar melodic riffs: step (0..31) → [chord-tone index, octave mult]
+  const RIFFS = {
+    B: { 0: [0, 1], 4: [1, 1], 8: [2, 1], 12: [1, 1], 16: [2, 1], 22: [1, 1], 26: [0, 1] },
+    C: { 0: [0, 1], 3: [1, 1], 6: [2, 1], 10: [1, 1], 12: [2, 1], 16: [1, 1], 19: [2, 1], 24: [0, 2], 28: [2, 1] },
+    D: { 0: [0, 2], 4: [2, 1], 8: [1, 2], 12: [2, 1], 16: [0, 2], 20: [2, 1], 24: [2, 2], 26: [1, 2], 28: [0, 2] },
+  };
 
   // ---- per-band groove: called each 16th step -----------------------
+  // barCount is incremented at s===0 BEFORE this runs, so the whole bar
+  // sees one stable chord. Freeze pauses bars without breaking the loop.
   function groove(t, s) {
     const beat = s % 4 === 0;            // quarter-note
     const onB = Math.floor(s / 4);       // which beat (0..3)
+    const bar = Math.max(0, barCount - 1);
+    const ch = CHORDS[(PROG[band] || PROG.C)[bar % 4]];
+    const riff = RIFFS[band];
+    const rn = riff && riff[(bar % 2) * 16 + s];
     switch (band) {
-      case "A": // calm — soft arpeggio, no drums
-        if (s % 8 === 0) pad(t, CALM[(onB) % CALM.length] / 2, spb * 2.2, 0.12);
-        if (beat) bell(t, CALM[onB % CALM.length], 0.10);
+      case "A": // calm — slow chord bed + a gentle kalimba arpeggio, no drums
+        if (s === 0) pad(t, ch.tones.map((f) => f / 2), spb * 4.4, 0.06);
+        if (beat && onB < 3) kalimba(t, ch.tones[[0, 1, 2][onB]], 0.11);
+        if (s === 14) kalimba(t, ch.tones[1] / 2, 0.07);
         break;
-      case "B": // steady march
-        if (onB === 0 || onB === 2) kick(t, 0.95);
+      case "B": // steady march — walking feel, rim on the off-beats
+        if (onB === 0 || onB === 2) kick(t, 0.8);
+        if (onB === 1 || onB === 3) woodblock(t, 1700, 0.28);
+        if (s % 2 === 0) shaker(t, beat ? 0.1 : 0.06);
+        if (s === 0) pluck(t, ch.root, 0.34, 0.4);
+        if (s === 8) pluck(t, ch.root * 1.5, 0.26, 0.35);
+        if (s === 4 || s === 12) strum(t, ch.tones, 0.06);
+        if (rn) kalimba(t, ch.tones[rn[0]] * rn[1], 0.13);
+        break;
+      case "C": { // moderate bounce — light swing, playful kalimba
+        const sw = s % 2 === 1 ? spb * 0.09 : 0;     // swung 16ths
+        if (onB === 0 || onB === 2) kick(t, 0.8);
+        if (onB === 1 || onB === 3) woodblock(t + sw, 1500, 0.24);
+        if (s % 2 === 0) shaker(t, beat ? 0.11 : 0.06); else shaker(t + sw, 0.045);
+        if (s === 0) pluck(t, ch.root, 0.36, 0.42);
+        if (s === 8) pluck(t, ch.root * 1.5, 0.24, 0.3);
+        if (s === 14) pluck(t + sw, ch.root * 2, 0.16, 0.18);
+        if (rn) kalimba(t + sw, ch.tones[rn[0]] * rn[1], 0.14);
+        break;
+      }
+      case "D": // high energy — four-on-the-floor, driving octave bass
+        if (beat) kick(t, 0.9);
         if (onB === 1 || onB === 3) clap(t, 0.4);
-        if (s % 2 === 0) hat(t, 0.10);
-        if (s === 0) tone(t, 130.81, 0.18, 0.18, "sawtooth"); // low bass pulse
+        if (s % 2 === 0) shaker(t, s % 4 === 2 ? 0.13 : 0.07);
+        if (s % 4 === 2) pluck(t, ch.root * (onB % 2 ? 2 : 1), 0.26, 0.2);
+        if (s === 0) pluck(t, ch.root, 0.34, 0.3);
+        if (rn) pluck(t, ch.tones[rn[0]] * rn[1] * 2, 0.12, 0.16);
         break;
-      case "C": // moderate bounce
-        if (onB === 0 || onB === 2) kick(t, 0.85);
-        if (s % 4 === 2) woodblock(t, 760, 0.22);
-        if (s === 6 || s === 14) bell(t, PENTA[(s) % PENTA.length], 0.16);
-        if (s % 2 === 1) hat(t, 0.08);
-        break;
-      case "D": // high energy four-on-the-floor
-        if (beat) kick(t, 0.95);
-        if (onB === 1 || onB === 3) clap(t, 0.45);
-        hat(t, s % 2 ? 0.16 : 0.10);
-        if (s === 0 || s === 10) bell(t, PENTA[(onB + 2) % PENTA.length], 0.18);
-        break;
-      case "E": // rhythm-led — big clear pulse, every beat
-        if (beat) { kick(t, 1.0); clap(t, 0.5); }
-        if (s % 4 === 2) hat(t, 0.14);
+      case "E": // rhythm-led — big clear pulse, the beat IS the game
+        if (beat) { kick(t, 0.95); clap(t, 0.45); }
+        if (s % 4 === 2) shaker(t, 0.12);
+        if (s === 0) pluck(t, ch.root, 0.3, 0.5);
         break;
     }
   }
@@ -217,9 +321,9 @@ window.PipAudio = (function () {
   }
 
   function playStep(t, s) {
+    if (s === 0) barCount++;   // bump first so the whole bar shares one chord
     const solo = sfxStep(t, s);
     if (!solo) groove(t, s);
-    if (s === 0) barCount++;
   }
 
   function schedule() {

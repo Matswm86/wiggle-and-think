@@ -137,16 +137,27 @@ function lerpShape(a, b, k) {
   const aa = a.adduct || 0, ba = b.adduct || 0, ap = a.prof || 0, bp = b.prof || 0;
   return { fingers: a.fingers.map((v, i) => v + (b.fingers[i] - v) * k), thumb: a.thumb + (b.thumb - a.thumb) * k, adduct: aa + (ba - aa) * k, prof: ap + (bp - ap) * k };
 }
+// like lerpShape but the fingers ROLL through the change — index leads,
+// pinky trails (a real hand never moves all four chains in lockstep).
+// q is the raw 0..1 switch progress; each finger gets its own eased k.
+function rollShape(a, b, q) {
+  const kAt = (lag) => smooth(clamp(q * 1.45 - lag * 0.15));
+  const k = smooth(q);
+  const aa = a.adduct || 0, ba = b.adduct || 0, ap = a.prof || 0, bp = b.prof || 0;
+  return { fingers: a.fingers.map((v, i) => v + (b.fingers[i] - v) * kAt(i)),
+    thumb: a.thumb + (b.thumb - a.thumb) * kAt(1.5),
+    adduct: aa + (ba - aa) * k, prof: ap + (bp - ap) * k };
+}
 // hold A, quick switch, hold B, quick switch back — both hands opposite
 function swap(A, B) {
   return (t) => {
     const p = ((t % 1) + 1) % 1;
-    let k;
-    if (p < 0.40) k = 0;
-    else if (p < 0.50) k = smooth((p - 0.40) / 0.10);
-    else if (p < 0.90) k = 1;
-    else k = 1 - smooth((p - 0.90) / 0.10);
-    return { L: lerpShape(A, B, k), R: lerpShape(B, A, k) };
+    let q;
+    if (p < 0.40) q = 0;
+    else if (p < 0.52) q = (p - 0.40) / 0.12;
+    else if (p < 0.90) q = 1;
+    else q = 1 - (p - 0.90) / 0.10;
+    return { L: rollShape(A, B, q), R: rollShape(B, A, q) };
   };
 }
 // fine-motor finger isolation: one finger taps down at a time (index→pinky→back),
@@ -202,8 +213,8 @@ function rockPaperScissors() {
   return (t) => {
     const p = ((t % 1) + 1) % 1, x = p * n;
     const i = Math.floor(x) % n, j = (i + 1) % n, frac = x - Math.floor(x);
-    const k = frac < 0.72 ? 0 : smooth((frac - 0.72) / 0.28);    // hold then snap
-    const pose = lerpShape(seq[i], seq[j], k);
+    const q = frac < 0.72 ? 0 : (frac - 0.72) / 0.28;            // hold then snap
+    const pose = rollShape(seq[i], seq[j], q);
     return { L: pose, R: pose };
   };
 }
@@ -232,14 +243,19 @@ function setPose(exId, t) {
   poseHand(hands.l, pose.L);
   poseHand(hands.r, pose.R);
   const near = 0.98;                            // wrist x; hands fan up & inward
-  hands.l.group.rotation.z = -0.13; hands.r.group.rotation.z = 0.13;  // slight inward tilt
+  // idle life: held shapes drift a touch (wall-clock, so it never syncs to the
+  // drill rhythm) — real hands are never statue-still between switches.
+  const T = performance.now() / 1000;
+  const fL = 0.022 * Math.sin(T * 1.9), fR = 0.022 * Math.sin(T * 1.9 + 2.3);
+  hands.l.group.rotation.z = -0.13 + 0.018 * Math.sin(T * 1.5);
+  hands.r.group.rotation.z = 0.13 + 0.018 * Math.sin(T * 1.4 + 1.1);
   // a beak read flat-on looks like a fist (the pinch points at the camera), so turn the
   // beak hand toward PROFILE — pinch silhouetted to the side. blended via the shape's prof.
   const PROF = 1.15;                            // radians (~66°) at full beak
   hands.l.group.rotation.y =  (pose.L.prof || 0) * PROF;
   hands.r.group.rotation.y = -(pose.R.prof || 0) * PROF;
-  placeHand(hands.l, -near, -1.45);
-  placeHand(hands.r, near, -1.45);
+  placeHand(hands.l, -near, -1.45 + fL);
+  placeHand(hands.r, near, -1.45 + fR);
 }
 
 // ---- shared renderer ----------------------------------------------

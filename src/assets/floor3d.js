@@ -175,10 +175,20 @@ function groundChar() {
   for (const a of char.contacts) { a.getWorldPosition(v); if (v.y < min) min = v.y; }
   if (isFinite(min)) char.root.position.y -= min - 0.02;
 }
+// life layer: breathing chest, idle tail sway and a tiny head roll on the
+// wall clock — held poses (downward dog especially) shouldn't be statue-still
+function lifeLayer(j) {
+  const T = performance.now() / 1000;
+  const br = 1 + 0.015 * Math.sin(T * 2.8);
+  j.chest.scale.set(1, br, 1 + (br - 1) * 0.5);
+  j.tailRoot.rotation.z += d(5) * Math.sin(T * 2.1);
+  j.head.rotation.x = d(2.2) * Math.sin(T * 1.3);
+}
 function poseMove(exId, t) {
   char.root.position.set(0, 0, 0);
   reset(char.joints);
   (MOVES[exId] || MOVES.bear)(char.joints, t);
+  lifeLayer(char.joints);
   groundChar();
 }
 
