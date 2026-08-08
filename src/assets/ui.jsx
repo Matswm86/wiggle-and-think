@@ -12,14 +12,15 @@ function pipHTML(ex, extra) {
   return s.replace(/class="(pip[-\w]*)"/, `class="$1 ${cls}"`);
 }
 
-function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure, lockBpm }) {
+function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure, lockBpm, beatMul }) {
   const ref = React.useRef(null);
   const html = React.useMemo(() => pipHTML(ex, frozen ? "frozen" : ""), [ex.id, frozen]);
-  // beat-lock: while music plays, one animation cycle = BEATS[ex] music beats,
-  // so the move lands on the beat. dur/speed = cycle secs → speed = dur*bpm/(60*beats)
+  // beat-lock: while music plays, one animation cycle = BEATS[ex] * beatMul music
+  // beats, so the move still lands on the beat but the Speed picker still bites
+  // (beatMul 2 = one cycle every 2 bars = half speed). dur/speed = cycle secs.
   const beatSpd = (dur) => {
     const n = lockBpm && window.BEATS && window.BEATS[ex.id];
-    return n ? (dur * lockBpm) / (60 * n) : 0;
+    return n ? (dur * lockBpm) / (60 * n * (beatMul || 1)) : 0;
   };
   React.useEffect(() => {
     const el = ref.current; if (!el) return;
@@ -110,7 +111,7 @@ function PipStage({ ex, className, frozen, speed, pausedAt, onMeasure, lockBpm }
       }
     });
     if (onMeasure && dur) onMeasure(dur);
-  }, [html, speed, pausedAt, frozen, ex.id, lockBpm]);
+  }, [html, speed, pausedAt, frozen, ex.id, lockBpm, beatMul]);
   return <div ref={ref} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 

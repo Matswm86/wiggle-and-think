@@ -4,7 +4,11 @@
 function midBpm(ex) { return Math.round((ex.bpm[0] + ex.bpm[1]) / 2); }
 function tintOf(ex) { return `color-mix(in srgb, ${ex.theme.accent} 16%, #fff8e8)`; }
 
-const SPEEDS = { slow: 0.5, normal: 0.85, fast: 1.35 };
+/* free-running animation speed (no music) */
+const SPEEDS = { slow: 0.28, normal: 0.8, fast: 1.3 };
+/* beat-locked multiplier (music on): how many BEATS-cycles one move cycle takes.
+   2 = half speed and still on the beat. Keeps Slow actually slow with music on. */
+const BEAT_MUL = { slow: 2, normal: 1, fast: 0.7 };
 
 /* which SFX each Clever-Hands move plays as its phases advance */
 const SFX_FOR = {
@@ -162,7 +166,7 @@ function MoveBody({ ex, spd, frozen, setDur, active, lockBpm }) {
       <div className="pleft">
         <div className="pstage-wrap" style={{ background: `color-mix(in srgb, ${ex.theme.accent} 10%, #fff)` }}>
           <Overlay ex={ex} />
-          <PipStage ex={ex} className="pstage" frozen={frozen} speed={SPEEDS[spd]} onMeasure={setDur} lockBpm={lockBpm} />
+          <PipStage ex={ex} className="pstage" frozen={frozen} speed={SPEEDS[spd]} onMeasure={setDur} lockBpm={lockBpm} beatMul={BEAT_MUL[spd]} />
           {frozen && <div className="freeze-ov"><div className="card2">❄ FREEZE!</div></div>}
         </div>
         <div className="livecap">
@@ -244,103 +248,210 @@ function Player({ ex, index, total, onNav, onClose, soundOn }) {
   );
 }
 
-/* ---------------- guided Session ---------------- */
+/* ---------------- guided Session — its own full-screen page ----------------
+   Three stages, none of which show the home page's copy:
+     intro → a quiet lobby card (what's coming, how long, pick a pace)
+     run   → one big stage, one caption, one timer; detail hidden in a drawer
+     done  → the celebration
+   A 3-2-1 cue card covers every move change so it never cuts abruptly.        */
 const SESSION_SECS = { breathe: 75, freeze: 90, default: 55 };
 function secsFor(ex) { return SESSION_SECS[ex.id] || SESSION_SECS.default; }
+function mmss(s) { s = Math.max(0, s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+
+/* circular countdown for the current move */
+function TimerDial({ left, total }) {
+  const R = 22, C = 2 * Math.PI * R;
+  const frac = total ? Math.max(0, Math.min(1, left / total)) : 0;
+  return (
+    <div className="tdial">
+      <svg viewBox="0 0 56 56" width="56" height="56">
+        <circle cx="28" cy="28" r={R} className="td-bg" />
+        <circle cx="28" cy="28" r={R} className="td-fg"
+          strokeDasharray={C} strokeDashoffset={C * (1 - frac)} />
+      </svg>
+      <span className="td-txt">{mmss(left)}</span>
+    </div>
+  );
+}
+
+function SessionIntro({ list, spd, setSpd, onStart, onClose }) {
+  const total = list.reduce((a, e) => a + secsFor(e), 0);
+  return (
+    <div className="sess sess-intro">
+      <button className="close-x sess-x" onClick={onClose} aria-label="Close">{I.close}</button>
+      <div className="si-card">
+        <div className="si-kicker"><Mark /> Guided session</div>
+        <h1>Ready to wiggle?</h1>
+        <p className="si-sub">
+          Pip takes you through {list.length} moves, one after the other.
+          Follow along, the music and the timer do the rest.
+        </p>
+        <div className="si-pills">
+          <span className="si-pill"><b>{list.length}</b> moves</span>
+          <span className="si-pill"><b>{Math.round(total / 60)}</b> minutes</span>
+          <span className="si-pill">ends <b>calm</b></span>
+        </div>
+        <div className="si-strip">
+          {list.map((e, i) => (
+            <div className="si-move" key={e.id} style={{ borderColor: `color-mix(in srgb, ${e.theme.accent} 45%, #fff)` }}>
+              <span className="si-n" style={{ background: e.theme.accent }}>{i + 1}</span>
+              <span className="si-nm">{e.name}</span>
+              <span className="si-s">{secsFor(e)}s</span>
+            </div>))}
+        </div>
+        <div className="si-actions">
+          <SpeedPicker val={spd} onChange={setSpd} />
+          <button className="btn green big" onClick={onStart}>{I.play} Let's go!</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SessionCue({ ex, n, total, count }) {
+  return (
+    <div className="sess-cue" style={{ background: `color-mix(in srgb, ${ex.theme.accent} 22%, #fff8e8)` }}>
+      <div className="sc-card">
+        <div className="sc-lbl">Move {n} of {total}</div>
+        <div className="sc-name" style={{ color: ex.theme.accent }}>{ex.name}</div>
+        <div className="sc-kid">{ex.kid}</div>
+        <div className="sc-count" style={{ background: ex.theme.accent }} key={count}>{count}</div>
+      </div>
+    </div>
+  );
+}
 
 function Session({ onClose, soundOn }) {
   const list = React.useMemo(() => window.SESSION.map(id => EXERCISES.find(e => e.id === id)), []);
+  const [stage, setStage] = React.useState("intro");    // intro | run | done
   const [idx, setIdx] = React.useState(0);
   const [left, setLeft] = React.useState(secsFor(list[0]));
-  const [running, setRunning] = React.useState(false);
-  const [done, setDone] = React.useState(false);
+  const [paused, setPaused] = React.useState(false);
+  const [cue, setCue] = React.useState(0);              // 3-2-1 before each move
   const [frozen, setFrozen] = React.useState(false);
   const [spd, setSpd] = React.useState("slow");
   const [dur, setDur] = React.useState(0);
   const [lockBpm, setLockBpm] = React.useState(null);
+  const [drawer, setDrawer] = React.useState(false);
   const frozenRef = React.useRef(setFrozen); frozenRef.current = setFrozen;
   const ex = list[idx];
+  const ticking = stage === "run" && !paused && !cue;
   const active = usePhaseClock(frozen ? 0 : dur, window.PHASES[ex.id]);
-  useStepSfx(ex.id, active, running && soundOn);
+  useStepSfx(ex.id, active, ticking && soundOn);
 
+  /* music follows the current move; it starts under the cue card so the beat is
+     already going when the move appears */
   React.useEffect(() => {
-    if (done) { window.PipAudio.stop(); setLockBpm(null); return; }
-    if (running && soundOn) {
-      window.PipAudio.ensure();
-      window.PipAudio.start(ex.band, midBpm(ex), ex.id === "freeze" ? {
-        freeze: true,
-        onFreeze: () => frozenRef.current(true),
-        onUnfreeze: () => frozenRef.current(false),
-      } : { sfx: ex.id });
-      setLockBpm(window.PipAudio.state.bpm);
-      const ni = list[idx + 1];                                   // prefetch the next move's track
-      if (ni && window.PipAudio.preload) window.PipAudio.preload(ni.band);
-    } else { window.PipAudio.stop(); setFrozen(false); setLockBpm(null); }
+    if (stage !== "run" || paused || !soundOn) { window.PipAudio.stop(); setFrozen(false); setLockBpm(null); return; }
+    window.PipAudio.ensure();
+    window.PipAudio.start(ex.band, midBpm(ex), ex.id === "freeze" ? {
+      freeze: true,
+      onFreeze: () => frozenRef.current(true),
+      onUnfreeze: () => frozenRef.current(false),
+    } : { sfx: ex.id });
+    setLockBpm(window.PipAudio.state.bpm);
+    const ni = list[idx + 1];
+    if (ni && window.PipAudio.preload) window.PipAudio.preload(ni.band);
     return () => window.PipAudio.stop();
-  }, [idx, running, done, soundOn]);
+  }, [idx, stage, paused, soundOn]);
+
+  React.useEffect(() => { if (stage === "done") window.PipAudio.stop(); }, [stage]);
 
   React.useEffect(() => {
-    if (!running || done) return;
+    if (!cue) return;
+    const t = setTimeout(() => setCue(c => c - 1), 900);
+    return () => clearTimeout(t);
+  }, [cue]);
+
+  React.useEffect(() => {
+    if (!ticking) return;
     const t = setInterval(() => setLeft(l => l - 1), 1000);
     return () => clearInterval(t);
-  }, [running, done, idx]);
+  }, [ticking, idx]);
 
-  React.useEffect(() => { if (left <= 0 && running) next(); }, [left]);
+  React.useEffect(() => { if (left <= 0 && stage === "run") next(); }, [left]);
 
-  function next() {
-    if (idx >= list.length - 1) { setDone(true); setRunning(false); return; }
-    const ni = idx + 1; setIdx(ni); setLeft(secsFor(list[ni])); setFrozen(false);
-  }
-  function start() { setRunning(true); }
+  function goto(i) { setIdx(i); setLeft(secsFor(list[i])); setFrozen(false); setDrawer(false); setCue(3); }
+  function next() { if (idx >= list.length - 1) { setStage("done"); return; } goto(idx + 1); }
+  function prev() { if (idx > 0) goto(idx - 1); }
+  function start() { setIdx(0); setLeft(secsFor(list[0])); setPaused(false); setStage("run"); setCue(3); }
 
-  if (done) {
+  if (stage === "intro")
+    return <SessionIntro list={list} spd={spd} setSpd={setSpd} onStart={start} onClose={onClose} />;
+
+  if (stage === "done") {
     return (
-      <div className="player" style={{ background: "var(--bg)" }}>
-        <div className="pbar"><div className="sp" style={{ flex: 1 }} /><button className="close-x" onClick={onClose}>{I.close}</button></div>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
-          <Confetti />
-          <div style={{ width: 260, height: 260 }}><PipStage ex={EXERCISES.find(e => e.id === "jacks")} className="pstage" speed={SPEEDS[spd]} /></div>
-          <h1 style={{ fontFamily: "var(--display)", fontSize: 46, margin: "10px 0 6px" }}>Great moving! 🎉</h1>
-          <p style={{ fontSize: 20, color: "var(--ink-soft)" }}>You finished your wiggle session.</p>
-          <div style={{ display: "flex", gap: 14, marginTop: 12 }}>
-            <button className="btn green" onClick={() => { setIdx(0); setLeft(secsFor(list[0])); setDone(false); setRunning(true); }}>Do it again</button>
-            <button className="btn ghost" onClick={onClose}>Back to moves</button>
+      <div className="sess sess-done">
+        <button className="close-x sess-x" onClick={onClose} aria-label="Close">{I.close}</button>
+        <Confetti />
+        <div className="sd-inner">
+          <div className="sd-stage"><PipStage ex={EXERCISES.find(e => e.id === "jacks")} className="pstage" speed={SPEEDS[spd]} /></div>
+          <h1>Great moving! 🎉</h1>
+          <p>You finished all {list.length} moves. Body woken up, brain switched on.</p>
+          <div className="sd-actions">
+            <button className="btn green" onClick={start}>Do it again</button>
+            <button className="btn ghost" onClick={onClose}>Back to the moves</button>
           </div>
         </div>
       </div>
     );
   }
 
-  const mm = String(Math.floor(Math.max(0, left) / 60)).padStart(1, "0");
-  const ss = String(Math.max(0, left) % 60).padStart(2, "0");
-
+  const caption = (window.PHASES[ex.id] || [])[active];
   return (
-    <div className="player" style={{ "--pbg": tintOf(ex), background: tintOf(ex) }}>
-      <div className="pbar wrap" style={{ maxWidth: "none", width: "100%" }}>
-        <span className="num" style={{ background: ex.theme.accent, color: "#fff" }}>{ex.n}</span>
-        <div className="phead"><div className="title">{ex.name}</div><div className="gtag">Session · move {idx + 1} of {list.length}</div></div>
-        <div className="sp" style={{ flex: 1 }} />
-        <span className="timer-ring">{mm}:{ss}</span>
-        <button className="close-x" onClick={onClose} style={{ marginLeft: 14 }}>{I.close}</button>
-      </div>
-
-      <MoveBody ex={ex} spd={spd} frozen={frozen} setDur={setDur} active={frozen ? (window.PHASES[ex.id] || []).length - 1 : active} lockBpm={running && soundOn && !frozen ? lockBpm : null} />
-
-      <div className="controls">
-        <div className="progress">
+    <div className="sess sess-run" style={{ "--pbg": tintOf(ex), "--acc": ex.theme.accent, background: tintOf(ex) }}>
+      <div className="sr-top">
+        <div className="sr-seg">
           {list.map((e, i) =>
-            <div key={i} className={"pdot" + (i < idx ? " done" : "")} title={e.name}
-              style={{ cursor: "pointer" }} onClick={() => { setIdx(i); setLeft(secsFor(list[i])); setFrozen(false); }}>
-              <div className="fill" style={{ width: i === idx ? `${100 - (left / secsFor(ex)) * 100}%` : undefined }} />
-            </div>)}
+            <button key={e.id} className={"seg" + (i < idx ? " done" : "") + (i === idx ? " now" : "")}
+              title={e.name} aria-label={"Go to " + e.name} onClick={() => goto(i)}>
+              <span className="fill" style={i === idx ? { width: `${100 - (left / secsFor(ex)) * 100}%` } : undefined} />
+            </button>)}
         </div>
-        <SpeedPicker val={spd} onChange={setSpd} />
-        {!running
-          ? <button className="btn green" onClick={start}>{I.play} Start</button>
-          : <button className="btn ghost sm" onClick={() => setRunning(false)}>Pause</button>}
-        <button className="btn sm" onClick={next}>Next {I.right}</button>
-        <span className="upnext">{idx < list.length - 1 ? "Up next: " + list[idx + 1].name : "Last one!"}</span>
+        <div className="sr-head">
+          <div className="sr-name">{ex.name}</div>
+          <div className="sr-sub">Move {idx + 1} of {list.length} · {ex.group}</div>
+        </div>
+        <TimerDial left={Math.max(0, left)} total={secsFor(ex)} />
+        <button className="close-x sr-x" onClick={onClose} aria-label="End session">{I.close}</button>
       </div>
+
+      <div className="sr-stage-wrap">
+        <div className="sr-stage">
+          <Overlay ex={ex} />
+          <PipStage ex={ex} className="pstage" frozen={frozen} speed={SPEEDS[spd]}
+            onMeasure={setDur} lockBpm={ticking && soundOn && !frozen ? lockBpm : null} beatMul={BEAT_MUL[spd]} />
+          {frozen && <div className="freeze-ov"><div className="card2">❄ FREEZE!</div></div>}
+        </div>
+        <div className="sr-cap">
+          <span className="lc-n" style={{ background: ex.theme.accent }}>{active + 1}</span>
+          <span>{caption ? caption.t : ex.kid}</span>
+        </div>
+      </div>
+
+      {drawer &&
+        <div className="sr-drawer">
+          <div className="srd-h">How the move goes</div>
+          <ol>{ex.steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+          {ex.easy && <p><b>Easier:</b> {ex.easy}</p>}
+          {ex.tricky && <p><b>Trickier:</b> {ex.tricky}</p>}
+        </div>}
+
+      <div className="sr-bottom">
+        <button className="navbtn" onClick={prev} disabled={idx === 0} aria-label="Previous move">{I.left}</button>
+        <button className="play sr-play" onClick={() => setPaused(p => !p)} aria-label={paused ? "Resume" : "Pause"}>
+          {paused ? I.play : I.pause}
+        </button>
+        <button className="navbtn" onClick={next} aria-label="Next move">{I.right}</button>
+        <SpeedPicker val={spd} onChange={setSpd} />
+        <button className={"btn ghost sm sr-steps" + (drawer ? " on" : "")} onClick={() => setDrawer(d => !d)}>
+          {I.book} {drawer ? "Hide steps" : "Steps"}
+        </button>
+        <div className="sp" style={{ flex: 1 }} />
+        <span className="sr-next">{idx < list.length - 1 ? "Up next: " + list[idx + 1].name : "Last one!"}</span>
+      </div>
+
+      {cue > 0 && <SessionCue ex={ex} n={idx + 1} total={list.length} count={cue} />}
     </div>
   );
 }
