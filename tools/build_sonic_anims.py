@@ -1,6 +1,7 @@
+import os
 import bpy, math, sys
 from mathutils import Vector, Matrix
-SRC = "/home/mats/MWM-AI/projects/wiggle-and-think/src/assets/anim/sonic_anim.glb"
+SRC = os.path.expanduser("~/MWM/projects/wiggle-and-think/src/assets/anim/sonic_anim.glb")
 OUT = sys.argv[sys.argv.index("--")+1]
 B = "mixamorig:"
 bpy.ops.wm.read_factory_settings(use_empty=True)
