@@ -13,7 +13,7 @@ row. The file paths are so Claude (or you) knows exactly where to look.
 
 ```bash
 node build.mjs                                            # source → dist/
-rsync -az --delete dist/ mats@204.168.244.173:/var/www/play/   # dist/ → live
+rsync -az --delete dist/ user@your-server:/var/www/play/   # dist/ → live
 ```
 
 Then commit + push so the repo matches:

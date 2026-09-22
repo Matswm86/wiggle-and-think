@@ -9,7 +9,7 @@ interpolation (`sonic3d.js`), so only ROTATION is used (no root translation).
 ```
 /tmp/blender/blender -b -P tools/build_sonic_anims.py -- /tmp/sonic_new.glb
 cp /tmp/sonic_new.glb src/assets/anim/sonic_anim.glb
-node build.mjs && rsync -az --delete dist/ mats@204.168.244.173:/var/www/play/
+node build.mjs && rsync -az --delete dist/ user@your-server:/var/www/play/
 ```
 The script imports the current GLB (keeps mesh + 8 baked Mixamo clips + textures),
 renames the real clips to clean names, drops import junk, authors the `MOVES` dict as
