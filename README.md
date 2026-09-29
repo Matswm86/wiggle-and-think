@@ -15,19 +15,19 @@ gets loud, then settles back down. Or tap any single move and do that one.
 
 | Group | Moves |
 |---|---|
-| Animal Walks | Bear Crawl, Crab Walk, Inchworm |
-| Two Sides Together | Cross-Crawl March, Windmill Toe-Touch, Two Beaks Talking |
+| Animal Walks | Bear Crawl, Crab Walk, Inchworm, Flamingo Hop |
+| Two Sides Together | Cross-Crawl March, Windmill Toe-Touch |
 | Yoga & Balance | Tree Pose, Airplane Pose, Cat-Cow, Downward Dog |
-| Balance & Steady | Flamingo Hop, Tightrope Walk |
-| Listen & Move Games | Freeze Dance, Clap & Echo |
-| Rhythm & Body Drum | Body Drum, Piano Fingers |
+| Balance & Steady | Tightrope Walk |
+| Listen & Move Games | Freeze Dance |
+| Rhythm & Body Drum | Clap & Echo, Body Drum |
 | Jumps & Bursts | Kangaroo Jumps, Star Jumps, Jumping Jacks |
-| Clever Hands | Palm & Beak, Fist & Palm, Point & Palm, Peace & Palm, Beak & Fist, Fist & Flat Swap, Finger Counting, Rock Paper Scissors |
+| Clever Hands | Two Beaks Talking, Piano Fingers, Palm & Beak Switch, Fist & Palm Switch, Point & Palm Switch, Peace & Palm Switch, Beak & Fist Switch, Fist & Flat Swap, Finger Counting, Rock Paper Scissors |
 | Calm & Breathe | Starfish Breathing |
 
-The Clever Hands moves are the finger and coordination drills: each one is shown on a real
-rigged 3D hand so a child can see exactly which finger goes where, which a flat drawing
-cannot do.
+The Clever Hands moves are the finger and coordination drills. Nine of the ten are shown on
+a real rigged 3D hand so a child can see exactly which finger goes where, which a flat
+drawing cannot do. Fist & Flat Swap is an arm move and is shown on the 3D character.
 
 ## Honest about the science
 
@@ -38,10 +38,13 @@ what the research actually supports:
   self-control than running around alone.
 - Keeping a steady beat is linked to the sound skills underneath early reading.
 - Jumping builds bone density. That is the strongest claim on the page.
+- Balance and hand-eye skills have a small but real link to attention and to maths and
+  reading readiness.
 - A short movement burst measurably improves attention for a while afterwards.
 
 It does not claim hemisphere balancing, Brain Gym, or that any of this raises a test
-score. The two source briefs the content was written from live in `src/_research/`.
+score. The three source briefs the content and animations were written from live in
+`src/_research/`.
 
 ## How it is built
 
@@ -54,24 +57,28 @@ at build time rather than in the browser.
 src/
   index.html              shell
   assets/
-    data.js               the 28 moves, session order, tempo bands, phases
-    pip.js                Pip, the articulated SVG mascot (biped, quadruped and crab rigs)
+    data.js               the 28 moves, session order, tempo bands, music tracks, phases
+    pip.js                Pip, the articulated SVG mascot (biped, quadruped and crab rigs),
+                          the fallback for any move without a 3D rig
     sonic3d.js            3D character rig: poses a skeleton from baked animation clips
     hands3d.js            3D hands for the Clever Hands moves, rigged 69-bone glTF
-    audio.js              Web Audio beat engine plus per-move sound effects
+    floor3d.js            3D Pip creature for the all-fours moves, built in code
+    audio.js              Web Audio engine: music loops, a synth groove, per-move sound effects
     anim.css / char.css   per-move keyframes, rig pivots, blink, breathing belly
     app.css               site styling
+    music/                13 bar-aligned music loops
     vendor/               React and Three.js, self-hosted
-  _research/              the two source research briefs
-build.mjs                 JSX to JS, copies vendor and models, writes dist/
+  _research/              the three source briefs
+build.mjs                 JSX to JS, copies vendor, models, animation and music, writes dist/
 verify.mjs                headless render of dist/ with console-error capture
 live-verify.mjs           the same check against the live domain
+rwd.mjs                   headless render of dist/ at eight screen sizes, flags sideways overflow
 ```
 
-Both 3D rigs share **one** offscreen WebGL renderer that draws into plain 2D canvases.
-Browsers cap live WebGL contexts at around sixteen, and the move grid alone wants
-twenty-eight, so the player stage animates live while every card and thumbnail gets a
-single rendered frame.
+Each of the three 3D rigs (hands, character, floor creature) draws through **one**
+offscreen WebGL renderer into plain 2D canvases. Browsers cap live WebGL contexts at
+around sixteen, and the move grid alone wants twenty-eight, so the player stage animates
+live while every card and thumbnail gets a single rendered frame.
 
 ```bash
 npm install
@@ -100,12 +107,12 @@ gets baked and wired in.
 
 Music is Kevin MacLeod (CC BY 4.0), Mixkit and OpenGameArt (CC0). Full list in
 [CREDITS.md](CREDITS.md). Sound effects are synthesised in the browser, so there are no
-audio files to license.
+sound-effect files to license. The two fonts, Baloo 2 and Fredoka, load from Google Fonts.
 
-The 3D character model in the hero and on most move cards is third-party fan-model
+The 3D character model in the hero and on half of the move cards is third-party fan-model
 content and is not covered by this repository's licence. The project's own code is MIT.
 
 ## Licence
 
 MIT for the code in this repository. Third-party models, music and fonts keep their own
-licences, listed above.
+licences, described under Credits above.
