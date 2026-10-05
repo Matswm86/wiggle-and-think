@@ -3,7 +3,7 @@
 Movement breaks for children aged 4 to 7, in the browser. Free, no account, no ads,
 nothing to install.
 
-Live at **[play.mwmai.no](https://play.mwmai.no)**.
+Live at **[wiggle.mwmai.no](https://wiggle.mwmai.no)**.
 
 ![The Wiggle & Think home page](docs/home.png)
 
