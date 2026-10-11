@@ -1,15 +1,28 @@
 # Wiggle & Think
 
 Movement breaks for children aged 4 to 7, in the browser. Free, no account, no ads,
-nothing to install.
-
-Live at **[wiggle.mwmai.no](https://wiggle.mwmai.no)**.
+nothing to install. Twenty-eight short moves, each with its own beat and an animated
+demonstration, plus a guided session that strings nine of them together.
 
 ![The Wiggle & Think home page](docs/home.png)
 
-Twenty-eight moves, each with its own beat, its own animated demonstration and a step by
-step pose breakdown. Press "Start a session" for a guided nine-move run that warms up,
-gets loud, then settles back down. Or tap any single move and do that one.
+The home page: the "Start a session" button and the 28 moves, filtered by group.
+
+## Download
+
+Open it in the browser: **[wiggle.mwmai.no](https://wiggle.mwmai.no)**. No account,
+nothing to install.
+
+## What it does
+
+- Tap any of the 28 moves and do that one. Each has its own beat, an animated
+  demonstration and a step by step pose breakdown.
+- Press "Start a session" for a guided nine-move run that warms up, gets loud, then
+  settles back down.
+- Pick Slow, Go or Fast, and start or pause the music.
+- Practise finger and coordination drills on a rigged 3D hand; each Clever Hands move also
+  has an easier and a trickier version.
+- Read the "For grown-ups" page, which sticks to what the research supports.
 
 ## The moves
 
@@ -45,6 +58,21 @@ what the research actually supports:
 It does not claim hemisphere balancing, Brain Gym, or that any of this raises a test
 score. The three source briefs the content and animations were written from live in
 `src/_research/`.
+
+## How it works
+
+It is a static site: React and three.js, self-hosted, with no server and no account. Each
+move is a data entry (name, steps, tempo, music band) and the page draws the demonstration
+live from it: a 3D character plays baked animation clips, a rigged 3D hand curls its
+fingers for the hand drills, and a small creature called Pip covers the all-fours moves.
+The music is a set of 13 looped tracks; the player picks the one nearest the move's tempo
+and locks the animation to the beat, while the sound effects are synthesised with Web
+Audio.
+
+## Status
+
+Live. All 28 moves, the guided nine-move session and the "For grown-ups" page are shipped,
+and no open TODO markers remain in the source.
 
 ## How it is built
 
